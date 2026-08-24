@@ -1,0 +1,133 @@
+/**
+ * SITE QUALITY CHECK — CHECKLISTS
+ *
+ * Styles for the checklist tabs, sections, and items.
+ */
+
+.sqc-checklists {
+    max-width: 900px;
+}
+
+.sqc-checklist-panel {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-top: none;
+    padding: 20px;
+}
+
+.sqc-checklist-tools {
+    margin-bottom: 16px;
+}
+
+.sqc-add-checklist-tab {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #2271b1;
+}
+
+.sqc-section {
+    margin-bottom: 24px;
+}
+
+.sqc-section-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.sqc-section-recurrence {
+    font-weight: 400;
+    color: #646970;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.sqc-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sqc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 4px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.sqc-item:last-child {
+    border-bottom: none;
+}
+
+.sqc-drag-handle {
+    display: none;
+    cursor: grab;
+    color: #a7aaad;
+    font-size: 14px;
+    line-height: 1;
+    user-select: none;
+}
+
+.sqc-editing .sqc-drag-handle {
+    display: inline-block;
+}
+
+.sqc-item-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    cursor: pointer;
+    margin: 0;
+}
+
+.sqc-item-label {
+    font-size: 14px;
+}
+
+.sqc-editing .sqc-item-label {
+    cursor: text;
+    border-bottom: 1px dashed transparent;
+}
+
+.sqc-editing .sqc-item-label:hover {
+    border-bottom-color: #a7aaad;
+}
+
+.sqc-item-label-input {
+    font-size: 14px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.sqc-item-complete .sqc-item-label {
+    text-decoration: line-through;
+    color: #8c8f94;
+}
+
+.sqc-item-actions {
+    display: none;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.sqc-editing .sqc-item-actions {
+    display: flex;
+}
+
+.sqc-item-actions .button-link {
+    text-decoration: none;
+    font-size: 14px;
+    padding: 2px 4px;
+}
+
+.sqc-add-item,
+.sqc-add-section {
+    margin-top: 8px;
+}

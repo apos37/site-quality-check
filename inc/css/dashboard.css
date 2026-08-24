@@ -1,0 +1,69 @@
+.sqc-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 70px;
+}
+
+.sqc-widget {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    padding: 16px;
+}
+
+.sqc-widget h2 {
+    font-size: 14px;
+    margin: 0 0 12px;
+}
+
+.sqc-checklist-summary-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sqc-checklist-summary-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.sqc-checklist-summary-list li:last-child {
+    border-bottom: none;
+}
+
+.sqc-stale-counts {
+    list-style: none;
+    margin: 0 0 12px;
+    padding: 0;
+    display: flex;
+    gap: 12px;
+}
+
+/* Quick Actions widget */
+
+.sqc-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sqc-toast {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.sqc-toast-success {
+    background: #edfaef;
+    border: 1px solid #00a32a;
+    color: #005a1c;
+}
+
+.sqc-toast-error {
+    background: #fcf0f1;
+    border: 1px solid #d63638;
+    color: #8a1f1f;
+}

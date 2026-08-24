@@ -1,0 +1,22 @@
+.sqc-integrations-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.sqc-integration-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    padding: 16px;
+}
+
+.sqc-integration-card h2 {
+    font-size: 15px;
+    margin: 0 0 8px;
+}
+
+.sqc-integration-detail {
+    font-size: 13px;
+    color: #50575e;
+}
