@@ -169,7 +169,7 @@ class Menu {
 
 
     /**
-     * Determine the current SQC admin page slug from $_GET['page'].
+     * Determine the current SQCheck admin page slug from $_GET['page'].
      *
      * @return string
      */

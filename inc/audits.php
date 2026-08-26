@@ -52,7 +52,8 @@ class Audits {
 
 
     /**
-     * Get the table name.
+     * Get the table name. Built from a hardcoded, fixed string plus $wpdb->prefix — never
+     * derived from user input — so interpolating it directly into SQL below is safe.
      *
      * @return string
      */
@@ -75,11 +76,14 @@ class Audits {
         $placeholders = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
         $table = self::table();
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table comes only from self::table(), a hardcoded prefix + fixed name; audit results must reflect live scan state, not cached data.
         $omitted_ids = $wpdb->get_col( $wpdb->prepare(
-            "SELECT post_id FROM {$table} WHERE audit_type = %s AND omitted = 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table is a hardcoded prefix + fixed table name, not user input; audit results must reflect live scan state, not cached data.
+            "SELECT post_id FROM {$table} WHERE audit_type = %s AND omitted = 1",
             $audit_type
         ) );
+        // phpcs:enable
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $placeholders is a dynamically-built string of %s/%d format specifiers (not raw values), and $query is already built via $wpdb->prepare() above before being passed to get_col().
         if ( ! empty( $omitted_ids ) ) {
             $exclude_placeholders = implode( ',', array_fill( 0, count( $omitted_ids ), '%d' ) );
             $query = $wpdb->prepare(
@@ -93,7 +97,8 @@ class Audits {
             );
         }
 
-        return array_map( 'absint', $wpdb->get_col( $query ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return array_map( 'absint', $wpdb->get_col( $query ) );
+        // phpcs:enable
     } // End get_scan_queue()
 
 
@@ -111,8 +116,8 @@ class Audits {
         if ( null === $linked_ids ) {
             global $wpdb;
 
-            $linked_ids = $wpdb->get_col(
-                "SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_menu_item_object_id'" // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $linked_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- static cache within the request already avoids repeat queries.
+                "SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_menu_item_object_id'"
             );
             $linked_ids = array_map( 'absint', $linked_ids );
         }
@@ -124,8 +129,8 @@ class Audits {
         if ( null === $nav_content ) {
             global $wpdb;
 
-            $nav_content = implode( ' ', $wpdb->get_col( $wpdb->prepare(
-                "SELECT post_content FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish'", // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $nav_content = implode( ' ', $wpdb->get_col( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- static cache within the request already avoids repeat queries.
+                "SELECT post_content FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish'",
                 'wp_navigation'
             ) ) );
         }
@@ -269,8 +274,8 @@ class Audits {
             wp_send_json_error( [ 'message' => __( 'Insufficient permissions.', 'site-quality-check' ) ], 403 );
         }
 
-        $audit_type = sanitize_key( wp_unslash( $_POST[ 'audit_type' ] ?? '' ) );
-        $offset = absint( $_POST[ 'offset' ] ?? 0 );
+        $audit_type = sanitize_key( wp_unslash( $_POST[ 'audit_type' ] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $offset = absint( wp_unslash( $_POST[ 'offset' ] ?? 0 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
 
         if ( ! in_array( $audit_type, self::TYPES, true ) ) {
             wp_send_json_error( [ 'message' => __( 'Invalid audit type.', 'site-quality-check' ) ] );
@@ -293,10 +298,12 @@ class Audits {
             global $wpdb;
             $post_types = StaleContent::get_included_post_types();
             $placeholders = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $placeholders is a dynamically-built string of %s format specifiers, not a raw value.
             $all_content = implode( ' ', $wpdb->get_col( $wpdb->prepare(
-                "SELECT post_content FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                "SELECT post_content FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders})",
                 $post_types
             ) ) );
+            // phpcs:enable
             set_transient( 'sqcheck_scan_all_content', $all_content, HOUR_IN_SECONDS );
         } elseif ( 'orphaned' === $audit_type ) {
             $all_content = get_transient( 'sqcheck_scan_all_content' ) ?: '';
@@ -343,7 +350,7 @@ class Audits {
     private static function save_result( string $audit_type, int $post_id, array $details ) : void {
         global $wpdb;
 
-        $wpdb->insert( self::table(), [ // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->insert( self::table(), [ // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- write operation, not cacheable.
             'audit_type' => $audit_type,
             'post_id'    => $post_id,
             'details'    => wp_json_encode( $details ),
@@ -362,7 +369,7 @@ class Audits {
     private static function clear_results( string $audit_type ) : void {
         global $wpdb;
 
-        $wpdb->delete( self::table(), [ 'audit_type' => $audit_type, 'omitted' => 0 ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->delete( self::table(), [ 'audit_type' => $audit_type, 'omitted' => 0 ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- write operation, not cacheable.
     } // End clear_results()
 
 
@@ -377,11 +384,13 @@ class Audits {
         global $wpdb;
         $table = self::table();
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table comes only from self::table(), a hardcoded prefix + fixed name; results must reflect live scan state, not cached data.
         return $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM {$table} WHERE audit_type = %s AND omitted = %d ORDER BY found_at DESC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table is hardcoded, not user input.
+            "SELECT * FROM {$table} WHERE audit_type = %s AND omitted = %d ORDER BY found_at DESC",
             $audit_type,
             $omitted ? 1 : 0
         ), ARRAY_A );
+        // phpcs:enable
     } // End get_results()
 
 
@@ -415,9 +424,9 @@ class Audits {
         }
 
         global $wpdb;
-        $id = absint( $_POST[ 'id' ] ?? 0 );
+        $id = absint( wp_unslash( $_POST[ 'id' ] ?? 0 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
 
-        $wpdb->update( self::table(), [ 'omitted' => 1 ], [ 'id' => $id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->update( self::table(), [ 'omitted' => 1 ], [ 'id' => $id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- write operation, not cacheable.
 
         wp_send_json_success();
     } // End ajax_omit_result()
@@ -436,9 +445,9 @@ class Audits {
         }
 
         global $wpdb;
-        $id = absint( $_POST[ 'id' ] ?? 0 );
+        $id = absint( wp_unslash( $_POST[ 'id' ] ?? 0 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
 
-        $wpdb->update( self::table(), [ 'omitted' => 0 ], [ 'id' => $id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->update( self::table(), [ 'omitted' => 0 ], [ 'id' => $id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- write operation, not cacheable.
 
         wp_send_json_success();
     } // End ajax_unomit_result()

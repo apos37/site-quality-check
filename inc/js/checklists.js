@@ -879,6 +879,10 @@
 
         var recurrenceLabel = $recurrenceSelect.find( 'option[value="' + section.recurrence + '"]' ).text();
 
+        var wrap = $( '<div class="sqcheck-section" draggable="true"></div>' )
+            .attr( 'data-section-id', section.id )
+            .attr( 'data-recurrence-order', section.recurrence_order );
+
         wrap.append(
             '<div class="sqcheck-section-header-row">' +
                 '<span class="sqcheck-section-drag-handle" title="Drag to reorder">⠿</span>' +

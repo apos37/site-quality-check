@@ -41,7 +41,7 @@ foreach ( $sqcheck_omitted_posts as $sqcheck_post_id ) {
 }
 
 global $wpdb;
-$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}sqcheck_audit_results" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}sqcheck_audit_results" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema drop on uninstall, not a cacheable operation.
 
 delete_option( 'sqcheck_stale_thresholds' );
 delete_option( 'sqcheck_stale_post_types' );

@@ -78,8 +78,8 @@ class ContentAudits {
     public static function get_current_tab() : string {
         $tabs = array_keys( self::get_audit_tabs() );
 
-        if ( isset( $_GET[ 'audit' ] ) ) {
-            $tab = sanitize_key( wp_unslash( $_GET[ 'audit' ] ) );
+        if ( isset( $_GET[ 'audit' ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab selector, no state change.
+            $tab = sanitize_key( wp_unslash( $_GET[ 'audit' ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
             if ( in_array( $tab, $tabs, true ) ) {
                 update_user_meta( get_current_user_id(), 'sqcheck_last_audit_tab', $tab );

@@ -234,7 +234,7 @@ class StaleContent {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to do this.', 'site-quality-check' ) ], 403 );
         }
 
-        $post_id = (int) wp_unslash( $_POST[ 'post_id' ] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified via check_ajax_referer above.
+        $post_id = (int) wp_unslash( $_POST[ 'post_id' ] ?? 0 ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- cast to (int) after wp_unslash() is itself the sanitization.
 
         self::omit_post( $post_id );
 
@@ -254,7 +254,7 @@ class StaleContent {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to do this.', 'site-quality-check' ) ], 403 );
         }
 
-        $post_id = (int) wp_unslash( $_POST[ 'post_id' ] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified via check_ajax_referer above.
+        $post_id = (int) wp_unslash( $_POST[ 'post_id' ] ?? 0 ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- cast to (int) after wp_unslash() is itself the sanitization.
 
         self::unomit_post( $post_id );
 

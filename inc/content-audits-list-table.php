@@ -168,10 +168,12 @@ class ContentAuditsListTable extends \WP_List_Table {
         $table = $wpdb->prefix . 'sqcheck_audit_results';
         $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
-        $wpdb->query( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            "UPDATE {$table} SET omitted = %d WHERE id IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is hardcoded via $wpdb->prefix, not user input.
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table is built from a hardcoded prefix + fixed name, not user input; write operation, not cacheable.
+        $wpdb->query( $wpdb->prepare(
+            "UPDATE {$table} SET omitted = %d WHERE id IN ({$placeholders})",
             array_merge( [ 'omit' === $action ? 1 : 0 ], $ids )
         ) );
+        // phpcs:enable
     } // End process_bulk_action()
 
 

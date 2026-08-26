@@ -57,6 +57,8 @@ class ChecklistsAjax {
 
     /**
      * Verify nonce and access, die with JSON error on failure.
+     * Always called as the first line of every handler below, before any
+     * $_POST value is read.
      *
      * @return void
      */
@@ -75,11 +77,13 @@ class ChecklistsAjax {
      * @return void
      */
     public function set_item_status() : void {
+        $this->guard();
+
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
         $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
         $status = sanitize_text_field( wp_unslash( $_POST[ 'status' ] ?? '' ) );
-
-        $this->guard();
+        // phpcs:enable
 
         if ( ! in_array( $status, [ 'complete', 'incomplete', 'snoozed' ], true ) ) {
             wp_send_json_error( [ 'message' => __( 'Invalid status.', 'site-quality-check' ) ] );
@@ -108,11 +112,13 @@ class ChecklistsAjax {
      * @return void
      */
     public function save_item_label() : void {
+        $this->guard();
+
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
         $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
-
-        $this->guard();
+        // phpcs:enable
 
         $sections = Checklists::get_sections( $checklist_id );
         $location = Checklists::find_item( $sections, $item_id );
@@ -136,11 +142,13 @@ class ChecklistsAjax {
      * @return void
      */
     public function add_item() : void {
+        $this->guard();
+
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
         $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $section_id = sanitize_text_field( wp_unslash( $_POST[ 'section_id' ] ?? '' ) );
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
-
-        $this->guard();
+        // phpcs:enable
 
         $sections = Checklists::get_sections( $checklist_id );
         $target_index = null;
@@ -180,10 +188,12 @@ class ChecklistsAjax {
      * @return void
      */
     public function delete_item() : void {
+        $this->guard();
+
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
         $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
-
-        $this->guard();
+        // phpcs:enable
 
         $sections = Checklists::get_sections( $checklist_id );
         $location = Checklists::find_item( $sections, $item_id );
@@ -207,12 +217,14 @@ class ChecklistsAjax {
      * @return void
      */
     public function move_item() : void {
+        $this->guard();
+
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
         $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
         $new_section_id = sanitize_text_field( wp_unslash( $_POST[ 'new_section_id' ] ?? '' ) );
         $item_ids = array_map( 'sanitize_text_field', wp_unslash( (array) ( $_POST[ 'item_ids' ] ?? [] ) ) );
-
-        $this->guard();
+        // phpcs:enable
 
         $sections = Checklists::get_sections( $checklist_id );
         $location = Checklists::find_item( $sections, $item_id );
@@ -261,11 +273,13 @@ class ChecklistsAjax {
      * @return void
      */
     public function add_section() : void {
+        $this->guard();
+
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
         $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
         $recurrence = sanitize_text_field( wp_unslash( $_POST[ 'recurrence' ] ?? 'daily' ) );
-
-        $this->guard();
+        // phpcs:enable
 
         if ( ! array_key_exists( $recurrence, Checklists::RECURRENCE_INTERVALS ) ) {
             $recurrence = 'daily';
@@ -304,12 +318,14 @@ class ChecklistsAjax {
      * @return void
      */
     public function save_section() : void {
+        $this->guard();
+
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
         $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $section_id = sanitize_text_field( wp_unslash( $_POST[ 'section_id' ] ?? '' ) );
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
         $recurrence = sanitize_text_field( wp_unslash( $_POST[ 'recurrence' ] ?? 'daily' ) );
-
-        $this->guard();
+        // phpcs:enable
 
         if ( ! array_key_exists( $recurrence, Checklists::RECURRENCE_INTERVALS ) ) {
             $recurrence = 'daily';
@@ -338,10 +354,12 @@ class ChecklistsAjax {
      * @return void
      */
     public function delete_section() : void {
+        $this->guard();
+
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
         $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $section_id = sanitize_text_field( wp_unslash( $_POST[ 'section_id' ] ?? '' ) );
-
-        $this->guard();
+        // phpcs:enable
 
         $sections = Checklists::get_sections( $checklist_id );
 
@@ -362,10 +380,12 @@ class ChecklistsAjax {
      * @return void
      */
     public function reorder_sections() : void {
+        $this->guard();
+
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
         $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $section_ids = array_map( 'sanitize_text_field', wp_unslash( (array) ( $_POST[ 'section_ids' ] ?? [] ) ) );
-
-        $this->guard();
+        // phpcs:enable
 
         $sections = Checklists::get_sections( $checklist_id );
         $sections_by_id = [];
@@ -397,7 +417,7 @@ class ChecklistsAjax {
     public function add_checklist() : void {
         $this->guard();
 
-        $title = sanitize_text_field( wp_unslash( $_POST[ 'title' ] ?? '' ) );
+        $title = sanitize_text_field( wp_unslash( $_POST[ 'title' ] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified via guard() above.
 
         if ( '' === $title ) {
             wp_send_json_error( [ 'message' => __( 'Title is required.', 'site-quality-check' ) ] );
@@ -415,15 +435,17 @@ class ChecklistsAjax {
 
 
     /**
-     * Save a checklist's title and access roles.
+     * Save a checklist's title.
      *
      * @return void
      */
     public function save_checklist() : void {
         $this->guard();
 
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
         $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $title = sanitize_text_field( wp_unslash( $_POST[ 'title' ] ?? '' ) );
+        // phpcs:enable
 
         wp_update_post( [
             'ID'         => $checklist_id,
@@ -444,7 +466,7 @@ class ChecklistsAjax {
     public function delete_checklist() : void {
         $this->guard();
 
-        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- verified via guard() above.
 
         wp_delete_post( $checklist_id, true );
 
@@ -460,16 +482,22 @@ class ChecklistsAjax {
     public function reorder_checklists() : void {
         $this->guard();
 
-        $checklist_ids = array_map( 'intval', (array) ( $_POST[ 'checklist_ids' ] ?? [] ) );
+        $checklist_ids = array_map( 'intval', wp_unslash( (array) ( $_POST[ 'checklist_ids' ] ?? [] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified via guard() above.
+
+        $last_id = 0;
 
         foreach ( $checklist_ids as $order => $checklist_id ) {
             wp_update_post( [
                 'ID'         => $checklist_id,
                 'menu_order' => $order,
             ] );
+
+            $last_id = $checklist_id;
         }
 
-        Checklists::touch( $checklist_id );
+        if ( $last_id ) {
+            Checklists::touch( $last_id );
+        }
 
         wp_send_json_success();
     } // End reorder_checklists()
