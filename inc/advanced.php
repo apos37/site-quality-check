@@ -68,15 +68,16 @@ class Advanced {
             'exported_at'    => gmdate( 'c' ),
             'plugin_version' => Bootstrap::version(),
             'settings'       => [
-                'menu_title'             => get_option( 'sqc_menu_title', '' ),
-                'page_title'             => get_option( 'sqc_page_title', '' ),
-                'menu_icon'              => get_option( 'sqc_menu_icon', '' ),
-                'logo'                   => get_option( 'sqc_logo', '' ),
-                'stale_thresholds'       => get_option( 'sqc_stale_thresholds', StaleContent::DEFAULT_THRESHOLDS ),
-                'stale_post_types'       => get_option( 'sqc_stale_post_types', [ 'post', 'page' ] ),
-                'contact_page_id'        => get_option( 'sqc_contact_page_id', 0 ),
-                'contact_form_id'        => get_option( 'sqc_contact_form_id', 0 ),
-                'enabled_quick_actions'  => get_option( 'sqc_enabled_quick_actions', [] ),
+                'menu_title'              => get_option( 'sqc_menu_title', '' ),
+                'page_title'              => get_option( 'sqc_page_title', '' ),
+                'menu_icon'               => get_option( 'sqc_menu_icon', '' ),
+                'logo'                    => get_option( 'sqc_logo', '' ),
+                'allowed_roles'           => get_option( 'sqc_allowed_roles', [] ),
+                'stale_thresholds'        => get_option( 'sqc_stale_thresholds', StaleContent::DEFAULT_THRESHOLDS ),
+                'stale_post_types'        => get_option( 'sqc_stale_post_types', [ 'post', 'page' ] ),
+                'contact_page_id'         => get_option( 'sqc_contact_page_id', 0 ),
+                'contact_form_id'         => get_option( 'sqc_contact_form_id', 0 ),
+                'enabled_quick_actions'   => get_option( 'sqc_enabled_quick_actions', [] ),
                 'clear_data_on_uninstall' => get_option( 'sqc_clear_data_on_uninstall', false ),
             ],
             'checklists' => $checklists,
@@ -124,6 +125,7 @@ class Advanced {
         delete_option( 'sqc_page_title' );
         delete_option( 'sqc_menu_icon' );
         delete_option( 'sqc_logo' );
+        delete_option( 'sqc_allowed_roles' );
         delete_option( 'sqc_stale_thresholds' );
         delete_option( 'sqc_stale_post_types' );
         delete_option( 'sqc_contact_page_id' );

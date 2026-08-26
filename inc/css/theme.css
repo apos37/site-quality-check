@@ -101,7 +101,7 @@
 /* Subheader */
 
 #sqc-subheader {
-    margin: 0 0 0 -20px !important;
+    margin: 0 0 20px -20px !important;
     display: flex;
     gap: 2rem;
     justify-content: flex-start;
@@ -110,7 +110,7 @@
     color: #333 !important;
     padding: 20px 30px;
     box-shadow: 0px 1px 2px rgba(16, 24, 40, .1);
-    min-height: 29px;
+    min-height: 40px;
 }
 
 #sqc-subheader .subheader-left {
@@ -166,7 +166,7 @@
 }
 
 .sqc-content-wrap {
-    margin-top: 70px !important;
+    margin-top: 40px !important;
 }
 
 /* Boxes */
@@ -290,6 +290,28 @@
     }
 }
 
+/* Search */
+
+.sqc-content-wrap .search-box {
+    display: none;
+}
+
+.sqc-posttype-search {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.sqc-search-input {
+    padding: 6px 10px;
+    border: 1px solid #d0d5dd;
+    border-radius: 5px !important;
+    font-size: 13px;
+    margin-bottom: 0 !important;
+    height: 30px !important;
+    min-height: 30px !important;
+}
+
 /* Buttons */
 
 .sqc-button {
@@ -340,6 +362,51 @@
     margin: 0 5px 0 -2px !important;
     color: var( --sqc-color-button-font ) !important;
 }
+
+.sqc-button-danger {
+    background: #fff !important;
+    color: #d63638 !important;
+    border: 1px solid #d63638 !important;
+}
+
+.sqc-button-danger:hover {
+    background: #d63638 !important;
+    color: #fff !important;
+}
+
+#sqc-subheader input[type="submit"],
+#sqc-subheader button,
+#sqc-subheader .sqc-button {
+    display: flex;
+    height: 30px !important;
+    min-height: 30px !important;
+    line-height: 1 !important;
+    padding: 0px 12px !important;
+    border: none;
+}
+
+.sqc-refresh-audit {
+    background: transparent !important;
+    border: none !important;
+    padding: 4px !important;
+    box-shadow: none !important;
+}
+
+.sqc-refresh-audit .dashicons {
+    color: var( --sqc-color-button );
+    font-size: 30px;
+    width: 30px;
+    height: 30px;
+}
+
+.sqc-refresh-audit:hover {
+    background: transparent !important;
+}
+
+.sqc-refresh-audit:hover .dashicons {
+    color: var( --sqc-color-button-hover );
+}
+
 
 /* Widget/integration cards reuse the same box style */
 
@@ -426,4 +493,132 @@
 @keyframes spin {
     0%   { transform: rotate( 0deg ); }
     100% { transform: rotate( 360deg ); }
+}
+
+/* Actions */
+
+.sqc-actions-cell {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Notices */
+
+.sqc-omitted-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border-left: 4px solid var( --sqc-color-header-tab );
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #3c434a;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.sqc-omitted-banner .dashicons {
+    color: var( --sqc-color-header-tab );
+}
+
+.sqc-audit-warning-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fcf0f1;
+    border-left: 4px solid #d63638;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #8a1f1f;
+}
+
+.sqc-audit-warning-banner .dashicons {
+    color: #d63638;
+}
+
+/* Modal */
+
+.sqc-alt-thumb-clickable {
+    cursor: pointer;
+}
+
+.sqc-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sqc-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba( 0, 0, 0, 0.7 );
+}
+
+.sqc-modal-content {
+    position: relative;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    margin: 0;
+    background: #fff;
+    border-radius: var( --sqc-radius );
+    padding: 20px;
+    text-align: center;
+}
+
+.sqc-modal-content img {
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: 6px;
+}
+
+.sqc-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: #50575e;
+}
+
+.sqc-modal-url {
+    margin: 12px 0 0;
+    word-break: break-all;
+    font-size: 13px;
+}
+
+/* Auditor table */
+
+.sqc-alt-thumb-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 12px;
+}
+
+.sqc-alt-thumb {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #d0d5dd;
+}
+
+.sqc-alt-thumb-label {
+    font-size: 12px;
+    color: #50575e;
 }

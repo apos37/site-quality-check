@@ -44,7 +44,7 @@ class DefaultData {
 
 
     /**
-     * Seed default checklists if not already done.
+     * Seed default checklists if not already done (called on activation).
      *
      * @return void
      */
@@ -53,12 +53,24 @@ class DefaultData {
             return;
         }
 
-        foreach ( $this->get_default_checklists() as $order => $checklist ) {
-            Checklists::create( $checklist[ 'title' ], $checklist[ 'sections' ], $order );
-        }
+        $this->seed_now();
 
         update_option( self::SEEDED_OPTION, true );
     } // End maybe_seed()
+
+
+    /**
+     * Actually create the default checklists, regardless of the seeded flag.
+     * Used both by maybe_seed() on activation and by the manual "Preload
+     * Default Checklists" button when all checklists have been deleted.
+     *
+     * @return void
+     */
+    public function seed_now() : void {
+        foreach ( $this->get_default_checklists() as $order => $checklist ) {
+            Checklists::create( $checklist[ 'title' ], $checklist[ 'sections' ], $order );
+        }
+    } // End seed_now()
 
 
     /**
@@ -72,18 +84,21 @@ class DefaultData {
                 'title'    => __( 'Developer', 'site-quality-check' ),
                 'sections' => [
                     $this->build_section( __( 'Weekly', 'site-quality-check' ), 'weekly', [
-                        __( 'Update plugins and themes', 'site-quality-check' ),
-                        __( 'Check for broken links', 'site-quality-check' ),
-                        __( 'Review error/debug logs', 'site-quality-check' ),
+                        __( 'Update WordPress core, themes, and plugins; verify site loads correctly after updating', 'site-quality-check' ),
+                        __( 'Back up this site\'s codebase (files, not just database)', 'site-quality-check' ),
+                        __( 'Check for malware scan alerts on this site (if a scanner is installed) and review results', 'site-quality-check' ),
+                        __( 'Confirm this site\'s backup completed successfully', 'site-quality-check' ),
                     ] ),
                     $this->build_section( __( 'Monthly', 'site-quality-check' ), 'monthly', [
-                        __( 'Verify staging/backup restore works', 'site-quality-check' ),
-                        __( 'Check SSL certificate expiration', 'site-quality-check' ),
-                        __( 'Review PHP and WordPress core version support', 'site-quality-check' ),
+                        __( 'Review installed plugins/themes and remove anything unused', 'site-quality-check' ),
+                        __( 'Check for PHP version updates and confirm compatibility', 'site-quality-check' ),
+                        __( 'Review admin/user accounts on this site — remove inactive or unnecessary access', 'site-quality-check' ),
+                        __( 'Check error logs for PHP errors, warnings, and notices', 'site-quality-check' ),
+                        __( 'Confirm offsite/offline backup copy exists and is current', 'site-quality-check' ),
                     ] ),
                     $this->build_section( __( 'Quarterly', 'site-quality-check' ), 'quarterly', [
-                        __( 'Audit installed plugins for unused/abandoned ones', 'site-quality-check' ),
-                        __( 'Review hosting performance and uptime reports', 'site-quality-check' ),
+                        __( 'Review this site\'s security plugin settings/configuration', 'site-quality-check' ),
+                        __( 'Review this site\'s code for outdated custom code or known vulnerable patterns', 'site-quality-check' ),
                     ] ),
                 ],
             ],

@@ -221,6 +221,7 @@ class Settings {
         $page_title = get_option( 'sqc_page_title', __( 'Site Quality Check', 'site-quality-check' ) );
         $menu_icon = get_option( 'sqc_menu_icon', 'dashicons-yes-alt' );
         $logo = get_option( 'sqc_logo', '' );
+        $allowed_roles = get_option( 'sqc_allowed_roles', [] );
         ?>
         <div class="wrap sqc-content-wrap sqc-settings">
             <?php Advanced::render_notices(); ?>
@@ -335,6 +336,26 @@ class Settings {
                 </div>
 
                 <div class="sqc-box">
+                    <div class="sqc-box-header"><h2><?php esc_html_e( 'Access', 'site-quality-check' ); ?></h2></div>
+                    <div class="sqc-box-body">
+                        <div class="sqc-field">
+                            <label>
+                                <?php esc_html_e( 'Additional Roles With Access', 'site-quality-check' ); ?>
+                                <?php Helpers::tooltip( __( 'Administrators always have full access. Select any additional roles that should be able to use this plugin.', 'site-quality-check' ) ); ?>
+                            </label>
+                            <div class="sqc-checkboxes">
+                                <?php foreach ( Access::get_assignable_roles() as $slug => $label ) : ?>
+                                    <label>
+                                        <input type="checkbox" name="sqc_allowed_roles[]" value="<?php echo esc_attr( $slug ); ?>" <?php checked( in_array( $slug, $allowed_roles, true ), true ); ?>>
+                                        <?php echo esc_html( $label ); ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sqc-box">
                     <div class="sqc-box-header"><h2><?php esc_html_e( 'Advanced', 'site-quality-check' ); ?></h2></div>
                     <div class="sqc-box-body">
 
@@ -435,6 +456,11 @@ class Settings {
 
         if ( isset( $settings[ 'sqc_enabled_quick_actions' ] ) ) {
             update_option( 'sqc_enabled_quick_actions', self::sanitize_enabled_actions( (array) $settings[ 'sqc_enabled_quick_actions' ] ) );
+        }
+
+        if ( isset( $settings[ 'sqc_allowed_roles' ] ) ) {
+            $allowed_roles = array_map( 'sanitize_key', (array) $settings[ 'sqc_allowed_roles' ] );
+            update_option( 'sqc_allowed_roles', $allowed_roles );
         }
 
         if ( empty( $errors ) ) {

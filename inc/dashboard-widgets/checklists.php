@@ -26,7 +26,7 @@ add_filter( 'sqc_dashboard_widgets', function ( array $widgets ) : array {
  * @return void
  */
 function render_checklists_widget() : void {
-    $checklists = Access::filter_accessible_checklists( Checklists::get_all() );
+    $checklists = Checklists::get_all();
 
     if ( empty( $checklists ) ) {
         echo '<p>' . esc_html__( 'No checklists available.', 'site-quality-check' ) . '</p>';
@@ -38,11 +38,9 @@ function render_checklists_widget() : void {
     foreach ( $checklists as $checklist ) {
         $stats = Checklists::get_completion_stats( $checklist->ID );
         $label = null === $stats[ 'percent' ] ? __( 'Nothing due', 'site-quality-check' ) : $stats[ 'percent' ] . '%';
+        $url = admin_url( 'admin.php?page=site-quality-check-checklists&checklist=' . $checklist->ID );
 
-        echo '<li>';
-        echo '<span class="sqc-checklist-name">' . esc_html( $checklist->post_title ) . '</span>';
-        echo '<span class="sqc-checklist-percent">' . esc_html( $label ) . '</span>';
-        echo '</li>';
+        echo '<li><a href="' . esc_url( $url ) . '" class="sqc-checklist-name">' . esc_html( $checklist->post_title ) . '</a><span class="sqc-checklist-percent">' . esc_html( $label ) . '</span></li>';
     }
 
     echo '</ul>';

@@ -58,9 +58,13 @@ class Menu {
      * @return void
      */
     public function register_menu() : void {
+        if ( ! Access::can_access() ) {
+            return;
+        }
+
         $menu_title = get_option( 'sqc_menu_title', __( 'Quality Check', 'site-quality-check' ) );
         $page_title = get_option( 'sqc_page_title', __( 'Site Quality Check', 'site-quality-check' ) );
-        $menu_icon = get_option( 'sqc_menu_icon', 'dashicons-yes-alt' );
+        $menu_icon = get_option( 'sqc_menu_icon', 'yes-alt' );
 
         add_menu_page(
             $page_title,
@@ -68,7 +72,7 @@ class Menu {
             'read',
             self::MENU_SLUG,
             [ $this, 'render_dashboard' ],
-            $menu_icon,
+            'dashicons-' . $menu_icon,
             2
         );
 
@@ -96,7 +100,7 @@ class Menu {
             self::MENU_SLUG,
             __( 'Stale Content', 'site-quality-check' ),
             __( 'Stale Content', 'site-quality-check' ),
-            'edit_posts',
+            'read',
             self::MENU_SLUG . '-stale-content',
             [ '\PluginRx\SiteQualityCheck\StaleContent', 'render_page' ]
         );
@@ -106,7 +110,7 @@ class Menu {
             self::MENU_SLUG,
             __( 'Content Audits', 'site-quality-check' ),
             __( 'Content Audits', 'site-quality-check' ),
-            'edit_posts',
+            'read',
             self::MENU_SLUG . '-content-audits',
             [ '\PluginRx\SiteQualityCheck\ContentAudits', 'render_page' ]
         );

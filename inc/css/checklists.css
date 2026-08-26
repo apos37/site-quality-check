@@ -4,10 +4,6 @@
  * Styles for the checklist tabs, sections, and items.
  */
 
-.sqc-checklists {
-    max-width: 900px;
-}
-
 .sqc-checklist-panel {
     background: #fff;
     border: 1px solid #dcdcde;
@@ -19,24 +15,8 @@
     margin-bottom: 16px;
 }
 
-.sqc-add-checklist-tab {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    color: #2271b1;
-}
-
 .sqc-section {
-    margin-bottom: 24px;
-}
-
-.sqc-section-label {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 0 0 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #dcdcde;
+    margin-bottom: 60px;
 }
 
 .sqc-section-recurrence {
@@ -51,6 +31,40 @@
     list-style: none;
     margin: 0;
     padding: 0;
+    min-height: 24px;
+    margin-bottom: 10px;
+}
+
+.sqc-add-item-row,
+.sqc-add-section-row,
+.sqc-edit-section-row,
+.sqc-add-checklist-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+}
+
+.sqc-add-item-row input,
+.sqc-add-section-row input,
+.sqc-edit-section-row input,
+.sqc-add-checklist-row input {
+    flex: 1;
+}
+
+.sqc-add-section-row select,
+.sqc-edit-section-row select {
+    flex-shrink: 0;
+}
+
+.sqc-checklist-panel {
+    border: none;
+}
+
+.sqc-section-edit-controls {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .sqc-item {
@@ -89,24 +103,17 @@
 
 .sqc-item-label {
     font-size: 14px;
-}
-
-.sqc-editing .sqc-item-label {
-    cursor: text;
-    border-bottom: 1px dashed transparent;
-}
-
-.sqc-editing .sqc-item-label:hover {
-    border-bottom-color: #a7aaad;
+    flex: 1;
+    min-width: 0;
 }
 
 .sqc-item-label-input {
     font-size: 14px;
     width: 100%;
-    max-width: 400px;
+    max-width: none;
 }
 
-.sqc-item-complete .sqc-item-label {
+.sqc-checklist-panel:not(.sqc-editing) .sqc-item-complete .sqc-item-label {
     text-decoration: line-through;
     color: #8c8f94;
 }
@@ -127,7 +134,258 @@
     padding: 2px 4px;
 }
 
+.sqc-items:empty {
+    min-height: 24px;
+    border: 1px dashed transparent;
+}
+
+.sqc-items:empty.sqc-drag-hover {
+    border-color: var( --sqc-color-accent );
+    background: rgba( 0, 0, 0, 0.02 );
+}
+
 .sqc-add-item,
 .sqc-add-section {
     margin-top: 8px;
+}
+
+#sqc-checklist-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+#sqc-checklist-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    padding: 16px 12px;
+}
+
+.sqc-sidebar-search {
+    margin-bottom: 12px;
+}
+
+.sqc-sidebar-search input[type="search"] {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+#sqc-checklist-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sqc-sidebar-item {
+    margin: 4px 0;
+}
+
+.sqc-sidebar-item a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 8px;
+    text-decoration: none;
+    background: #ffffff;
+    color: #1d2327;
+    font-size: 13.5px;
+    border: 1px solid #e2e4e7;
+    transition: background 0.15s ease;
+}
+
+.sqc-sidebar-item a:hover {
+    background: #f0f2f4;
+}
+
+.sqc-sidebar-item.active a {
+    box-shadow: inset 0 2px 4px rgba( 0, 0, 0, 0.08 ), inset 0 1px 2px rgba( 0, 0, 0, 0.05 );
+    font-weight: 600;
+    position: relative;
+    cursor: default;
+    pointer-events: none;
+    background: #f6f7f8;
+}
+
+.sqc-sidebar-item.active a::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    border-radius: 3px;
+    background: var( --sqc-color-accent );
+}
+
+.sqc-sidebar-item-percent {
+    font-size: 11px;
+    opacity: 0.7;
+    font-weight: 500;
+}
+
+.sqc-sidebar-item.dragging {
+    opacity: 0.5;
+}
+
+#sqc-checklist-viewer {
+    flex: 1 1 0;
+    padding: 24px;
+    min-width: 0;
+}
+
+.sqc-checklist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.sqc-checklist-title {
+    font-size: 1.6rem;
+    margin: 0;
+    padding: 0;
+    border-top: 0 !important;
+}
+
+.sqc-checklist-tools {
+    display: flex;
+    gap: 8px;
+}
+
+.sqc-add-checklist-row {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.sqc-item-snoozed-badge {
+    font-size: 11px;
+    color: #8c8f94;
+    background: #f0f0f1;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+.sqc-checklist-panel.sqc-editing .sqc-item-snoozed-badge {
+    display: none;
+}
+
+.sqc-section-header-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    background: #f6f7f8;
+    border-radius: 6px;
+}
+
+.sqc-section-header-row h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+.sqc-editing .sqc-section-label {
+    cursor: text;
+}
+
+.sqc-item-toggle:disabled {
+    cursor: not-allowed;
+}
+
+.sqc-section-placeholder {
+    background: #e2e4e7;
+    border: 2px dashed #999;
+    border-radius: 8px;
+    margin: 5px 0;
+    pointer-events: none;
+}
+
+.sqc-section.sqc-dragging {
+    opacity: 0.3;
+}
+
+.sqc-section-drag-handle {
+    cursor: grab;
+    color: #a7aaad;
+    font-size: 16px;
+    line-height: 1;
+    user-select: none;
+    margin-right: 8px;
+}
+
+.sqc-section-drag-handle:active {
+    cursor: grabbing;
+}
+
+.sqc-show-edit-section,
+.sqc-delete-section,
+.sqc-edit-item-label,
+.sqc-delete-item {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 4px !important;
+    text-decoration: none !important;
+    color: var( --sqc-color-button ) !important;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.sqc-show-edit-section:hover,
+.sqc-delete-section:hover,
+.sqc-edit-item-label:hover,
+.sqc-delete-item:hover {
+    color: var( --sqc-color-button-hover ) !important;
+}
+
+.sqc-show-add-section {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #eaecf0;
+    width: 100%;
+    display: block;
+}
+
+.sqc-add-item-input,
+.sqc-add-section-input,
+.sqc-edit-section-input,
+.sqc-add-checklist-input,
+.sqc-item-label-input,
+.sqc-add-section-recurrence,
+.sqc-edit-section-recurrence,
+#sqc-checklist-search {
+    border: 1px solid #d0d5dd !important;
+    border-radius: 6px !important;
+    padding: 0px 12px !important;
+    font-size: 13px !important;
+    box-shadow: none !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    line-height: 1 !important;
+}
+
+.sqc-editing .sqc-item-label,
+.sqc-editing .sqc-section-label {
+    cursor: text;
+}
+
+.sqc-checklist-meta {
+    font-size: 12px;
+    color: #8c8f94;
+    margin: 0 0 60px;
+}
+
+.sqc-checklist-danger-zone {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid #eaecf0;
 }

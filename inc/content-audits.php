@@ -2,7 +2,8 @@
 /**
  * CONTENT AUDITS
  *
- * Yoast SEO missing-meta report. Only active if Yoast SEO is installed.
+ * Tabbed content audits: Orphaned Pages, Missing Alt Text, SEO Meta, Mixed Content.
+ * Each tab scans in chunks via AJAX and stores results in a custom table.
  */
 
 namespace PluginRx\SiteQualityCheck;
@@ -32,371 +33,261 @@ class ContentAudits {
      * Constructor
      */
     private function __construct() {
-        // No hooks needed beyond the menu registration handled in menu.php.
+        add_action( 'sqc_subheader_left', [ $this, 'render_subheader_tabs' ] );
+        add_action( 'sqc_subheader_right', [ $this, 'render_subheader_controls' ] );
     } // End __construct()
 
 
     /**
-     * Get all published posts (from included post types) missing a Yoast title or meta description.
+     * Audit type => label.
      *
-     * @return array Array of [ 'post' => WP_Post, 'missing_title' => bool, 'missing_description' => bool ]
+     * @return array
      */
-    public static function get_missing_yoast_meta() : array {
-        if ( ! Integrations::is_yoast_active() ) {
-            return [];
-        }
-
-        $post_types = StaleContent::get_included_post_types();
-
-        $posts = get_posts( [
-            'post_type'      => $post_types,
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-        ] );
-
-        $results = [];
-
-        foreach ( $posts as $post ) {
-            $title = Integrations::get_yoast_title( $post->ID );
-            $description = Integrations::get_yoast_meta_description( $post->ID );
-
-            $missing_title = '' === trim( $title );
-            $missing_description = '' === trim( $description );
-
-            if ( $missing_title || $missing_description ) {
-                $results[] = [
-                    'post'                => $post,
-                    'missing_title'       => $missing_title,
-                    'missing_description' => $missing_description,
-                ];
-            }
-        }
-
-        return $results;
-    } // End get_missing_yoast_meta()
+    public static function get_audit_tabs() : array {
+        return [
+            'orphaned'      => __( 'Orphaned Pages', 'site-quality-check' ),
+            'alt_text'      => __( 'Missing Alt Text', 'site-quality-check' ),
+            'mixed_content' => __( 'Mixed Content', 'site-quality-check' ),
+            'seo_meta'      => __( 'SEO Meta', 'site-quality-check' ),
+        ];
+    } // End get_audit_tabs()
 
 
     /**
-     * Get all images (from post content and featured images) missing alt text.
+     * Get an explanatory description for each audit type, shown above the results.
      *
-     * @return array Array of [ 'post' => WP_Post, 'image_src' => string ]
+     * @param string $audit_type
+     * @return string
      */
-    public static function get_missing_alt_text() : array {
-        $post_types = StaleContent::get_included_post_types();
-
-        $posts = get_posts( [
-            'post_type'      => $post_types,
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-        ] );
-
-        $results = [];
-
-        foreach ( $posts as $post ) {
-            $featured_id = get_post_thumbnail_id( $post );
-
-            if ( $featured_id ) {
-                $alt = get_post_meta( $featured_id, '_wp_attachment_image_alt', true );
-
-                if ( '' === trim( (string) $alt ) ) {
-                    $results[] = [
-                        'post'      => $post,
-                        'image_src' => wp_get_attachment_url( $featured_id ),
-                    ];
-                }
-            }
-
-            if ( preg_match_all( '/<img[^>]+>/i', $post->post_content, $tags ) ) {
-                foreach ( $tags[ 0 ] as $tag ) {
-                    if ( preg_match( '/alt=["\']([^"\']*)["\']/i', $tag, $alt_match ) ) {
-                        if ( '' !== trim( $alt_match[ 1 ] ) ) {
-                            continue;
-                        }
-                    }
-
-                    preg_match( '/src=["\']([^"\']*)["\']/i', $tag, $src_match );
-
-                    $results[] = [
-                        'post'      => $post,
-                        'image_src' => $src_match[ 1 ] ?? '',
-                    ];
-                }
-            }
-        }
-
-        return $results;
-    } // End get_missing_alt_text()
+    private static function get_audit_description( string $audit_type ) : string {
+        return match ( $audit_type ) {
+            'orphaned' => __( 'Orphaned pages have no other page or post linking to them, making them hard for visitors and search engines to discover. Fix this by adding an internal link to the page from your navigation menu, a relevant post, or another page on your site.', 'site-quality-check' ),
+            'alt_text' => __( 'This checks images used within your page and post content, including featured images — not every file in your Media Library. Images without alt text are invisible to screen readers and are missed by search engines trying to understand your content. Fix this by editing the image in the block editor, or in the media library if it\'s a featured image, and adding a short, descriptive alt text.', 'site-quality-check' ),
+            'seo_meta' => __( 'Pages missing an SEO title or meta description may show up poorly in search results, using an auto-generated snippet instead of one you control. Fix this by editing the page and filling in the Yoast SEO title and meta description fields.', 'site-quality-check' ),
+            'mixed_content' => __( 'Mixed content means a page served over HTTPS is loading an image or resource over plain HTTP, which browsers may block or flag as insecure. Fix this by editing the page and updating the flagged URL to use https:// instead of http://.', 'site-quality-check' ),
+            default => '',
+        };
+    } // End get_audit_description()
 
 
     /**
-     * Get all published posts (from included post types) that no other post links to internally.
-     * Excludes the homepage and any page set as the posts page.
+     * Get the current audit tab, from $_GET, falling back to the user's last-viewed, then default.
      *
-     * @return array Array of WP_Post
+     * @return string
      */
-    public static function get_orphaned_pages() : array {
-        $post_types = StaleContent::get_included_post_types();
+    public static function get_current_tab() : string {
+        $tabs = array_keys( self::get_audit_tabs() );
 
-        $posts = get_posts( [
-            'post_type'      => $post_types,
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-        ] );
+        if ( isset( $_GET[ 'audit' ] ) ) {
+            $tab = sanitize_key( wp_unslash( $_GET[ 'audit' ] ) );
 
-        $home_id = (int) get_option( 'page_on_front' );
-        $blog_id = (int) get_option( 'page_for_posts' );
-
-        $all_content = '';
-
-        foreach ( $posts as $post ) {
-            $all_content .= ' ' . $post->post_content;
+            if ( in_array( $tab, $tabs, true ) ) {
+                update_user_meta( get_current_user_id(), 'sqc_last_audit_tab', $tab );
+                return $tab;
+            }
         }
 
-        $results = [];
+        $last = get_user_meta( get_current_user_id(), 'sqc_last_audit_tab', true );
 
-        foreach ( $posts as $post ) {
-            if ( $post->ID === $home_id || $post->ID === $blog_id ) {
-                continue;
-            }
-
-            $permalink = get_permalink( $post );
-            $path = wp_parse_url( $permalink, PHP_URL_PATH );
-
-            if ( ! $path || false !== strpos( $all_content, $path ) ) {
-                continue;
-            }
-
-            $results[] = $post;
-        }
-
-        return $results;
-    } // End get_orphaned_pages()
+        return in_array( $last, $tabs, true ) ? $last : $tabs[ 0 ];
+    } // End get_current_tab()
 
 
     /**
-     * Get all published posts (from included post types) containing http:// references
-     * on an HTTPS site — mixed content risk.
+     * Render the audit tabs in the subheader (left side).
      *
-     * @return array Array of [ 'post' => WP_Post, 'urls' => array ]
+     * @param string $active_page
+     * @return void
      */
-    public static function get_mixed_content() : array {
-        if ( ! is_ssl() && 'https' !== wp_parse_url( home_url(), PHP_URL_SCHEME ) ) {
-            return [];
+    public function render_subheader_tabs( string $active_page ) : void {
+        if ( Menu::MENU_SLUG . '-content-audits' !== $active_page ) {
+            return;
         }
 
-        $post_types = StaleContent::get_included_post_types();
+        $current_tab = self::get_current_tab();
+        ?>
+        <?php foreach ( self::get_audit_tabs() as $slug => $label ) : ?>
+            <a href="<?php echo esc_url( add_query_arg( 'audit', $slug, remove_query_arg( 'sqc_view' ) ) ); ?>" class="sqc-button <?php echo $current_tab === $slug ? '' : 'button-secondary'; ?>"><?php echo esc_html( $label ); ?></a>
+        <?php endforeach; ?>
+        <?php
+    } // End render_subheader_tabs()
 
-        $posts = get_posts( [
-            'post_type'      => $post_types,
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-        ] );
 
-        $results = [];
+    /**
+     * Render last-checked + refresh + show omitted controls (right side).
+     *
+     * @param string $active_page
+     * @return void
+     */
+    public function render_subheader_controls( string $active_page ) : void {
+        if ( Menu::MENU_SLUG . '-content-audits' !== $active_page ) {
+            return;
+        }
 
-        foreach ( $posts as $post ) {
-            $urls = [];
+        $current_tab = self::get_current_tab();
 
-            if ( preg_match_all( '/(src|href)=["\']http:\/\/[^"\']+["\']/i', $post->post_content, $matches ) ) {
-                $urls = array_merge( $urls, $matches[ 0 ] );
-            }
+        if ( 'mixed_content' === $current_tab && 'https' !== wp_parse_url( home_url(), PHP_URL_SCHEME ) ) {
+            return;
+        }
 
-            $featured_id = get_post_thumbnail_id( $post );
+        if ( 'seo_meta' === $current_tab && ! Integrations::is_yoast_active() ) {
+            return;
+        }
 
-            if ( $featured_id ) {
-                $featured_url = wp_get_attachment_url( $featured_id );
+        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ];
+        $omitted_count = count( Audits::get_results( $current_tab, true ) );
+        ?>
+        <span id="sqc-audit-last-checked" data-audit-type="<?php echo esc_attr( $current_tab ); ?>">
+            <?php echo esc_html( sprintf( __( 'Last checked: %s', 'site-quality-check' ), Audits::get_last_checked_display( $current_tab ) ) ); ?>
+        </span>
 
-                if ( $featured_url && 0 === strpos( $featured_url, 'http://' ) ) {
-                    $urls[] = $featured_url;
+        <button type="button" class="sqc-button sqc-refresh-audit" id="sqc-refresh-audit" data-audit-type="<?php echo esc_attr( $current_tab ); ?>" title="<?php esc_attr_e( 'Rescan', 'site-quality-check' ); ?>">
+            <span class="dashicons dashicons-update"></span>
+        </button>
+
+        <?php if ( $showing_omitted ) : ?>
+            <a href="<?php echo esc_url( remove_query_arg( 'sqc_view' ) ); ?>" class="sqc-button"><?php esc_html_e( 'Show Active', 'site-quality-check' ); ?></a>
+        <?php else : ?>
+            <a href="<?php echo esc_url( add_query_arg( 'sqc_view', 'omitted' ) ); ?>" class="sqc-button"><?php echo esc_html( sprintf(
+                /* translators: %d: number of omitted items */
+                __( 'Show Omitted (%d)', 'site-quality-check' ),
+                $omitted_count
+            ) ); ?></a>
+        <?php endif; ?>
+        <?php
+    } // End render_subheader_controls()
+
+
+    /**
+     * Details column renderer for each audit type.
+     *
+     * @param string $audit_type
+     * @return callable
+     */
+    private static function get_details_renderer( string $audit_type ) : callable {
+        return match ( $audit_type ) {
+            'alt_text' => function ( $details ) {
+                $labels = [ 'featured' => __( 'Featured Image', 'site-quality-check' ), 'content' => __( 'In Content', 'site-quality-check' ) ];
+                $out = [];
+
+                foreach ( $details[ 'images' ] ?? [] as $image ) {
+                    $src = $image[ 'src' ] ?? '';
+                    $source_label = $labels[ $image[ 'source' ] ?? '' ] ?? '';
+
+                    $out[] = '<span class="sqc-alt-thumb-row"><img src="' . esc_url( $src ) . '" class="sqc-alt-thumb sqc-alt-thumb-clickable" data-full-src="' . esc_url( $src ) . '" alt=""><span class="sqc-alt-thumb-label">' . esc_html( $source_label ) . '</span></span>';
                 }
-            }
 
-            if ( ! empty( $urls ) ) {
-                $results[] = [
-                    'post' => $post,
-                    'urls' => array_unique( $urls ),
-                ];
-            }
-        }
+                return implode( '', $out );
+            },
+            'seo_meta' => function ( $details ) {
+                $labels = [ 'title' => __( 'SEO Title', 'site-quality-check' ), 'description' => __( 'Meta Description', 'site-quality-check' ) ];
+                $missing = array_map( fn( $key ) => $labels[ $key ] ?? $key, $details[ 'missing' ] ?? [] );
+                return esc_html( implode( ', ', $missing ) );
+            },
+            'mixed_content' => function ( $details ) {
+                return esc_html( implode( ', ', $details[ 'urls' ] ?? [] ) );
+            },
+            default => function ( $details ) {
+                return '—';
+            },
+        };
+    } // End get_details_renderer()
 
-        return $results;
-    } // End get_mixed_content()
 
-
-        /**
+    /**
      * Render the Content Audits admin page.
      *
      * @return void
      */
     public static function render_page() : void {
-        if ( ! current_user_can( 'edit_posts' ) ) {
+        if ( ! Access::can_access() ) {
             wp_die( esc_html__( 'You do not have permission to view this page.', 'site-quality-check' ) );
         }
+
+        wp_enqueue_script(
+            'sqc-content-audits',
+            Bootstrap::url() . 'inc/js/content-audits.js',
+            [ 'jquery' ],
+            Bootstrap::script_version(),
+            true
+        );
+
+        wp_localize_script( 'sqc-content-audits', 'sqcAudits', [
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 'sqc_audits_nonce' ),
+            'i18n'    => [
+                'scanning' => __( 'Scanning:', 'site-quality-check' ),
+                'lastChecked' => __( 'Last checked:', 'site-quality-check' ),
+            ],
+        ] );
+
+        $current_tab = self::get_current_tab();
+        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ];
+
+        if ( 'seo_meta' === $current_tab && ! Integrations::is_yoast_active() ) {
+            ?>
+            <div class="wrap sqc-content-wrap sqc-content-audits">
+                <p><?php echo esc_html( self::get_audit_description( $current_tab ) ); ?></p>
+                <div class="sqc-box"><div class="sqc-box-body">
+                    <p><?php esc_html_e( 'Yoast SEO is not active. Install it to see missing meta title and description reports.', 'site-quality-check' ); ?></p>
+                </div></div>
+            </div>
+            <?php
+            return;
+        }
+
+        if ( 'mixed_content' === $current_tab && 'https' !== wp_parse_url( home_url(), PHP_URL_SCHEME ) ) {
+            ?>
+            <div class="wrap sqc-content-wrap sqc-content-audits">
+                <p><?php echo esc_html( self::get_audit_description( $current_tab ) ); ?></p>
+                <div class="sqc-audit-warning-banner">
+                    <span class="dashicons dashicons-warning"></span>
+                    <?php esc_html_e( 'Your site is not using HTTPS. Every WordPress site should be served over HTTPS — most hosts offer free SSL certificates. This check will run automatically once your site is switched to HTTPS.', 'site-quality-check' ); ?>
+                </div>
+            </div>
+            <?php
+            return;
+        }
+
+        $table = new ContentAuditsListTable( $current_tab, self::get_details_renderer( $current_tab ) );
+        $table->prepare_items();
         ?>
         <div class="wrap sqc-content-wrap sqc-content-audits">
-            <?php if ( ! Integrations::is_yoast_active() ) : ?>
-                <h2><?php esc_html_e( 'SEO Meta', 'site-quality-check' ); ?></h2>
-                <p><?php esc_html_e( 'Yoast SEO is not active. Install it to see missing meta title and description reports.', 'site-quality-check' ); ?></p>
-            <?php else : ?>
-                <?php self::render_yoast_section(); ?>
+            <p><?php echo esc_html( self::get_audit_description( $current_tab ) ); ?></p>
+
+            <?php if ( $showing_omitted ?? false ) : ?>
+                <div class="sqc-omitted-banner">
+                    <span class="dashicons dashicons-hidden"></span>
+                    <?php esc_html_e( 'Showing omitted items — these are excluded from the active audit above.', 'site-quality-check' ); ?>
+                </div>
             <?php endif; ?>
 
-            <?php self::render_alt_text_section(); ?>
-            <?php self::render_orphaned_pages_section(); ?>
-            <?php self::render_mixed_content_section(); ?>
+            <div id="sqc-audit-scanning-status" style="display:none;"></div>
+            <div class="sqc-box" id="sqc-audit-results-box">
+                <div class="sqc-box-body">
+                    <?php if ( empty( $table->items ) ) : ?>
+                        <p><?php esc_html_e( 'No results found.', 'site-quality-check' ); ?></p>
+                    <?php else : ?>
+                        <form method="get">
+                            <input type="hidden" name="page" value="<?php echo esc_attr( Menu::MENU_SLUG . '-content-audits' ); ?>">
+                            <input type="hidden" name="audit" value="<?php echo esc_attr( $current_tab ); ?>">
+                            <?php $table->display(); ?>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div id="sqc-image-modal" class="sqc-modal" style="display:none;">
+                <div class="sqc-modal-overlay"></div>
+                <div class="sqc-modal-content">
+                    <button type="button" class="sqc-modal-close" aria-label="<?php esc_attr_e( 'Close', 'site-quality-check' ); ?>">&times;</button>
+                    <img src="" alt="" id="sqc-modal-image">
+                    <p class="sqc-modal-url"><a href="" target="_blank" rel="noopener noreferrer" id="sqc-modal-link"></a></p>
+                </div>
+            </div>
         </div>
         <?php
     } // End render_page()
-
-
-    /**
-     * Render the missing Yoast meta section.
-     *
-     * @return void
-     */
-    private static function render_yoast_section() : void {
-        $missing = self::get_missing_yoast_meta();
-        ?>
-        <h2><?php esc_html_e( 'SEO Meta', 'site-quality-check' ); ?></h2>
-
-        <?php if ( empty( $missing ) ) : ?>
-            <p><?php esc_html_e( 'All published content has a title and meta description set.', 'site-quality-check' ); ?></p>
-        <?php else : ?>
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th><?php esc_html_e( 'Title', 'site-quality-check' ); ?></th>
-                        <th><?php esc_html_e( 'Type', 'site-quality-check' ); ?></th>
-                        <th><?php esc_html_e( 'Missing', 'site-quality-check' ); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ( $missing as $item ) : ?>
-                        <?php
-                        $post = $item[ 'post' ];
-                        $missing_labels = [];
-
-                        if ( $item[ 'missing_title' ] ) {
-                            $missing_labels[] = __( 'SEO Title', 'site-quality-check' );
-                        }
-
-                        if ( $item[ 'missing_description' ] ) {
-                            $missing_labels[] = __( 'Meta Description', 'site-quality-check' );
-                        }
-                        ?>
-                        <tr>
-                            <td><a href="<?php echo esc_url( get_edit_post_link( $post->ID ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a></td>
-                            <td><?php echo esc_html( get_post_type_object( $post->post_type )->labels->singular_name ); ?></td>
-                            <td><?php echo esc_html( implode( ', ', $missing_labels ) ); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
-        <?php
-    } // End render_yoast_section()
-
-
-    /**
-     * Render the missing alt text section.
-     *
-     * @return void
-     */
-    private static function render_alt_text_section() : void {
-        $missing = self::get_missing_alt_text();
-        ?>
-        <h2><?php esc_html_e( 'Missing Image Alt Text', 'site-quality-check' ); ?></h2>
-
-        <?php if ( empty( $missing ) ) : ?>
-            <p><?php esc_html_e( 'No images are missing alt text.', 'site-quality-check' ); ?></p>
-        <?php else : ?>
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th><?php esc_html_e( 'Post', 'site-quality-check' ); ?></th>
-                        <th><?php esc_html_e( 'Image', 'site-quality-check' ); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ( $missing as $item ) : ?>
-                        <tr>
-                            <td><a href="<?php echo esc_url( get_edit_post_link( $item[ 'post' ]->ID ) ); ?>"><?php echo esc_html( get_the_title( $item[ 'post' ] ) ); ?></a></td>
-                            <td><?php echo esc_html( $item[ 'image_src' ] ); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
-        <?php
-    } // End render_alt_text_section()
-
-
-    /**
-     * Render the orphaned pages section.
-     *
-     * @return void
-     */
-    private static function render_orphaned_pages_section() : void {
-        $orphaned = self::get_orphaned_pages();
-        ?>
-        <h2><?php esc_html_e( 'Orphaned Pages', 'site-quality-check' ); ?></h2>
-
-        <?php if ( empty( $orphaned ) ) : ?>
-            <p><?php esc_html_e( 'No orphaned pages found.', 'site-quality-check' ); ?></p>
-        <?php else : ?>
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th><?php esc_html_e( 'Title', 'site-quality-check' ); ?></th>
-                        <th><?php esc_html_e( 'Type', 'site-quality-check' ); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ( $orphaned as $post ) : ?>
-                        <tr>
-                            <td><a href="<?php echo esc_url( get_edit_post_link( $post->ID ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a></td>
-                            <td><?php echo esc_html( get_post_type_object( $post->post_type )->labels->singular_name ); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
-        <?php
-    } // End render_orphaned_pages_section()
-
-
-    /**
-     * Render the mixed content section.
-     *
-     * @return void
-     */
-    private static function render_mixed_content_section() : void {
-        $mixed = self::get_mixed_content();
-        ?>
-        <h2><?php esc_html_e( 'Mixed Content', 'site-quality-check' ); ?></h2>
-
-        <?php if ( empty( $mixed ) ) : ?>
-            <p><?php esc_html_e( 'No mixed content found.', 'site-quality-check' ); ?></p>
-        <?php else : ?>
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th><?php esc_html_e( 'Post', 'site-quality-check' ); ?></th>
-                        <th><?php esc_html_e( 'Insecure URLs', 'site-quality-check' ); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ( $mixed as $item ) : ?>
-                        <tr>
-                            <td><a href="<?php echo esc_url( get_edit_post_link( $item[ 'post' ]->ID ) ); ?>"><?php echo esc_html( get_the_title( $item[ 'post' ] ) ); ?></a></td>
-                            <td><?php echo esc_html( implode( ', ', $item[ 'urls' ] ) ); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
-        <?php
-    } // End render_mixed_content_section()
 
 } // End class ContentAudits
 

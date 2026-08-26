@@ -43,7 +43,7 @@ class ChecklistsAjax {
         add_action( 'wp_ajax_sqc_save_item_label', [ $this, 'save_item_label' ] );
         add_action( 'wp_ajax_sqc_add_item', [ $this, 'add_item' ] );
         add_action( 'wp_ajax_sqc_delete_item', [ $this, 'delete_item' ] );
-        add_action( 'wp_ajax_sqc_reorder_items', [ $this, 'reorder_items' ] );
+        add_action( 'wp_ajax_sqc_move_item', [ $this, 'move_item' ] );
         add_action( 'wp_ajax_sqc_add_section', [ $this, 'add_section' ] );
         add_action( 'wp_ajax_sqc_save_section', [ $this, 'save_section' ] );
         add_action( 'wp_ajax_sqc_delete_section', [ $this, 'delete_section' ] );
@@ -56,34 +56,17 @@ class ChecklistsAjax {
 
 
     /**
-     * Verify nonce and checklist access, die with JSON error on failure.
-     *
-     * @param int $checklist_id
-     * @return void
-     */
-    private function guard( int $checklist_id ) : void {
-        check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-
-        $allowed_roles = Checklists::get_access( $checklist_id );
-
-        if ( ! Access::can_access_checklist( $allowed_roles ) ) {
-            wp_send_json_error( [ 'message' => __( 'You do not have permission to edit this checklist.', 'site-quality-check' ) ], 403 );
-        }
-    } // End guard()
-
-
-    /**
-     * Verify nonce and management access (for checklist-level actions: create/delete/reorder tabs).
+     * Verify nonce and access, die with JSON error on failure.
      *
      * @return void
      */
-    private function guard_manage() : void {
+    private function guard() : void {
         check_ajax_referer( self::NONCE_ACTION, 'nonce' );
 
-        if ( ! Access::can_manage() ) {
+        if ( ! Access::can_access() ) {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to do this.', 'site-quality-check' ) ], 403 );
         }
-    } // End guard_manage()
+    } // End guard()
 
 
     /**
@@ -96,9 +79,9 @@ class ChecklistsAjax {
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
         $status = sanitize_text_field( wp_unslash( $_POST[ 'status' ] ?? '' ) );
 
-        $this->guard( $checklist_id );
+        $this->guard();
 
-        if ( ! in_array( $status, [ 'complete', 'incomplete', 'snoozed', 'omitted' ], true ) ) {
+        if ( ! in_array( $status, [ 'complete', 'incomplete', 'snoozed' ], true ) ) {
             wp_send_json_error( [ 'message' => __( 'Invalid status.', 'site-quality-check' ) ] );
         }
 
@@ -108,7 +91,14 @@ class ChecklistsAjax {
             wp_send_json_error( [ 'message' => __( 'Item not found.', 'site-quality-check' ) ] );
         }
 
-        wp_send_json_success( [ 'stats' => Checklists::get_completion_stats( $checklist_id ) ] );
+        $sections = Checklists::get_sections( $checklist_id );
+        $location = Checklists::find_item( $sections, $item_id );
+        $snoozed_until = $location ? Helpers::format_date( $location[ 'item' ][ 'snoozed_until' ] ?? null ) : '';
+
+        wp_send_json_success( [
+            'stats'         => Checklists::get_completion_stats( $checklist_id ),
+            'snoozed_until' => $snoozed_until,
+        ] );
     } // End set_item_status()
 
 
@@ -122,7 +112,7 @@ class ChecklistsAjax {
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
 
-        $this->guard( $checklist_id );
+        $this->guard();
 
         $sections = Checklists::get_sections( $checklist_id );
         $location = Checklists::find_item( $sections, $item_id );
@@ -134,6 +124,7 @@ class ChecklistsAjax {
         $sections[ $location[ 'section_index' ] ][ 'items' ][ $location[ 'item_index' ] ][ 'label' ] = $label;
 
         Checklists::save_sections( $checklist_id, $sections );
+        Checklists::touch( $checklist_id );
 
         wp_send_json_success();
     } // End save_item_label()
@@ -149,7 +140,7 @@ class ChecklistsAjax {
         $section_id = sanitize_text_field( wp_unslash( $_POST[ 'section_id' ] ?? '' ) );
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
 
-        $this->guard( $checklist_id );
+        $this->guard();
 
         $sections = Checklists::get_sections( $checklist_id );
         $target_index = null;
@@ -177,6 +168,7 @@ class ChecklistsAjax {
         $sections[ $target_index ][ 'items' ][] = $new_item;
 
         Checklists::save_sections( $checklist_id, $sections );
+        Checklists::touch( $checklist_id );
 
         wp_send_json_success( [ 'item' => $new_item ] );
     } // End add_item()
@@ -191,7 +183,7 @@ class ChecklistsAjax {
         $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
 
-        $this->guard( $checklist_id );
+        $this->guard();
 
         $sections = Checklists::get_sections( $checklist_id );
         $location = Checklists::find_item( $sections, $item_id );
@@ -203,51 +195,64 @@ class ChecklistsAjax {
         array_splice( $sections[ $location[ 'section_index' ] ][ 'items' ], $location[ 'item_index' ], 1 );
 
         Checklists::save_sections( $checklist_id, $sections );
+        Checklists::touch( $checklist_id );
 
         wp_send_json_success();
     } // End delete_item()
 
 
     /**
-     * Reorder items within a section (drag-drop).
+     * Move an item to a (possibly different) section and set its position there.
      *
      * @return void
      */
-    public function reorder_items() : void {
+    public function move_item() : void {
         $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
-        $section_id = sanitize_text_field( wp_unslash( $_POST[ 'section_id' ] ?? '' ) );
+        $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
+        $new_section_id = sanitize_text_field( wp_unslash( $_POST[ 'new_section_id' ] ?? '' ) );
         $item_ids = array_map( 'sanitize_text_field', wp_unslash( (array) ( $_POST[ 'item_ids' ] ?? [] ) ) );
 
-        $this->guard( $checklist_id );
+        $this->guard();
 
         $sections = Checklists::get_sections( $checklist_id );
+        $location = Checklists::find_item( $sections, $item_id );
+
+        if ( ! $location ) {
+            wp_send_json_error( [ 'message' => __( 'Item not found.', 'site-quality-check' ) ] );
+        }
+
+        $item = $sections[ $location[ 'section_index' ] ][ 'items' ][ $location[ 'item_index' ] ];
+
+        array_splice( $sections[ $location[ 'section_index' ] ][ 'items' ], $location[ 'item_index' ], 1 );
 
         foreach ( $sections as $index => $section ) {
-            if ( ( $section[ 'id' ] ?? '' ) !== $section_id ) {
-                continue;
-            }
+            if ( ( $section[ 'id' ] ?? '' ) === $new_section_id ) {
+                $items_by_id = [];
 
-            $items_by_id = [];
-            foreach ( $section[ 'items' ] ?? [] as $item ) {
-                $items_by_id[ $item[ 'id' ] ] = $item;
-            }
-
-            $reordered = [];
-            foreach ( $item_ids as $order => $id ) {
-                if ( isset( $items_by_id[ $id ] ) ) {
-                    $items_by_id[ $id ][ 'order' ] = $order;
-                    $reordered[] = $items_by_id[ $id ];
+                foreach ( $section[ 'items' ] as $existing ) {
+                    $items_by_id[ $existing[ 'id' ] ] = $existing;
                 }
-            }
 
-            $sections[ $index ][ 'items' ] = $reordered;
-            break;
+                $items_by_id[ $item[ 'id' ] ] = $item;
+
+                $reordered = [];
+                foreach ( $item_ids as $order => $id ) {
+                    if ( isset( $items_by_id[ $id ] ) ) {
+                        $items_by_id[ $id ][ 'order' ] = $order;
+                        $reordered[] = $items_by_id[ $id ];
+                    }
+                }
+
+                $sections[ $index ][ 'items' ] = $reordered;
+                break;
+            }
         }
 
         Checklists::save_sections( $checklist_id, $sections );
+        Checklists::touch( $checklist_id );
 
         wp_send_json_success();
-    } // End reorder_items()
+    } // End move_item()
 
 
     /**
@@ -260,7 +265,7 @@ class ChecklistsAjax {
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
         $recurrence = sanitize_text_field( wp_unslash( $_POST[ 'recurrence' ] ?? 'daily' ) );
 
-        $this->guard( $checklist_id );
+        $this->guard();
 
         if ( ! array_key_exists( $recurrence, Checklists::RECURRENCE_INTERVALS ) ) {
             $recurrence = 'daily';
@@ -278,7 +283,16 @@ class ChecklistsAjax {
 
         $sections[] = $new_section;
 
+        $recurrence_order = array_keys( Checklists::RECURRENCE_INTERVALS );
+
+        usort( $sections, function ( $a, $b ) use ( $recurrence_order ) {
+            return array_search( $a[ 'recurrence' ], $recurrence_order, true ) <=> array_search( $b[ 'recurrence' ], $recurrence_order, true );
+        } );
+
         Checklists::save_sections( $checklist_id, $sections );
+        Checklists::touch( $checklist_id );
+
+        $new_section[ 'recurrence_order' ] = array_search( $recurrence, $recurrence_order, true );
 
         wp_send_json_success( [ 'section' => $new_section ] );
     } // End add_section()
@@ -295,7 +309,7 @@ class ChecklistsAjax {
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
         $recurrence = sanitize_text_field( wp_unslash( $_POST[ 'recurrence' ] ?? 'daily' ) );
 
-        $this->guard( $checklist_id );
+        $this->guard();
 
         if ( ! array_key_exists( $recurrence, Checklists::RECURRENCE_INTERVALS ) ) {
             $recurrence = 'daily';
@@ -312,6 +326,7 @@ class ChecklistsAjax {
         }
 
         Checklists::save_sections( $checklist_id, $sections );
+        Checklists::touch( $checklist_id );
 
         wp_send_json_success();
     } // End save_section()
@@ -326,7 +341,7 @@ class ChecklistsAjax {
         $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
         $section_id = sanitize_text_field( wp_unslash( $_POST[ 'section_id' ] ?? '' ) );
 
-        $this->guard( $checklist_id );
+        $this->guard();
 
         $sections = Checklists::get_sections( $checklist_id );
 
@@ -335,6 +350,7 @@ class ChecklistsAjax {
         } ) );
 
         Checklists::save_sections( $checklist_id, $sections );
+        Checklists::touch( $checklist_id );
 
         wp_send_json_success();
     } // End delete_section()
@@ -349,7 +365,7 @@ class ChecklistsAjax {
         $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
         $section_ids = array_map( 'sanitize_text_field', wp_unslash( (array) ( $_POST[ 'section_ids' ] ?? [] ) ) );
 
-        $this->guard( $checklist_id );
+        $this->guard();
 
         $sections = Checklists::get_sections( $checklist_id );
         $sections_by_id = [];
@@ -367,6 +383,7 @@ class ChecklistsAjax {
         }
 
         Checklists::save_sections( $checklist_id, $reordered );
+        Checklists::touch( $checklist_id );
 
         wp_send_json_success();
     } // End reorder_sections()
@@ -378,7 +395,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function add_checklist() : void {
-        $this->guard_manage();
+        $this->guard();
 
         $title = sanitize_text_field( wp_unslash( $_POST[ 'title' ] ?? '' ) );
 
@@ -403,18 +420,17 @@ class ChecklistsAjax {
      * @return void
      */
     public function save_checklist() : void {
-        $this->guard_manage();
+        $this->guard();
 
         $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
         $title = sanitize_text_field( wp_unslash( $_POST[ 'title' ] ?? '' ) );
-        $roles = array_map( 'sanitize_text_field', wp_unslash( (array) ( $_POST[ 'roles' ] ?? [] ) ) );
 
         wp_update_post( [
             'ID'         => $checklist_id,
             'post_title' => $title,
         ] );
 
-        Checklists::save_access( $checklist_id, $roles );
+        Checklists::touch( $checklist_id );
 
         wp_send_json_success();
     } // End save_checklist()
@@ -426,7 +442,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function delete_checklist() : void {
-        $this->guard_manage();
+        $this->guard();
 
         $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
 
@@ -442,7 +458,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function reorder_checklists() : void {
-        $this->guard_manage();
+        $this->guard();
 
         $checklist_ids = array_map( 'intval', (array) ( $_POST[ 'checklist_ids' ] ?? [] ) );
 
@@ -452,6 +468,8 @@ class ChecklistsAjax {
                 'menu_order' => $order,
             ] );
         }
+
+        Checklists::touch( $checklist_id );
 
         wp_send_json_success();
     } // End reorder_checklists()

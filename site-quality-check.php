@@ -46,9 +46,12 @@ final class Bootstrap {
         'checklists.php',
         'default-data.php',
         'checklists-ajax.php',
+        'stale-content-list-table.php',
         'stale-content.php',
+        'audits.php',
         'quick-actions.php',
         'integrations.php',
+        'content-audits-list-table.php',
         'content-audits.php',
         'settings.php',
         'advanced.php',
@@ -256,7 +259,7 @@ final class Bootstrap {
     } // End load_dashboard_widgets()
 
 
-        /**
+    /**
      * Activation hook
      *
      * @return void
@@ -266,10 +269,42 @@ final class Bootstrap {
             update_option( 'sqc_activated_time', time() );
         }
 
+        self::create_tables();
+
         add_action( 'init', function () {
             do_action( 'sqc_activated' );
         }, 20 );
     } // End activate()
+
+
+    /**
+     * Create custom database tables.
+     *
+     * @return void
+     */
+    public static function create_tables() : void {
+        global $wpdb;
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+        $charset_collate = $wpdb->get_charset_collate();
+        $table = $wpdb->prefix . 'sqc_audit_results';
+
+        $sql = "CREATE TABLE {$table} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            audit_type VARCHAR(50) NOT NULL,
+            post_id BIGINT UNSIGNED NOT NULL,
+            details LONGTEXT NULL,
+            omitted TINYINT(1) NOT NULL DEFAULT 0,
+            found_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY audit_type (audit_type),
+            KEY post_id (post_id),
+            KEY omitted (omitted)
+        ) {$charset_collate};";
+
+        dbDelta( $sql );
+    } // End create_tables()
 
 } // End class Bootstrap
 

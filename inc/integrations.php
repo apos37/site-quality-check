@@ -33,7 +33,7 @@ class Integrations {
      * Constructor
      */
     private function __construct() {
-        // No hooks needed here beyond what's registered in menu.php for the admin page.
+        add_action( 'wp_ajax_sqc_activate_plugin', [ $this, 'ajax_activate_plugin' ] );
     } // End __construct()
 
 
@@ -45,13 +45,14 @@ class Integrations {
      * @return array
      */
     public static function get_plugin_list() : array {
-        return [
+        $plugins = [
             'pluginrx-control-center' => [
                 'name'        => 'PluginRx Control Center',
                 'file'        => 'pluginrx-control-center/pluginrx-control-center.php',
                 'url'         => 'https://pluginrx.com/plugin/pluginrx-control-center/',
-                'description' => __( 'Manage multiple sites from one dashboard.', 'site-quality-check' ),
+                'description' => __( 'Manage multiple sites from one dashboard. Requires PluginRx Agent to be installed on each connected site.', 'site-quality-check' ),
                 'integration' => __( 'View checklist completion and stale content counts across all connected sites.', 'site-quality-check' ),
+                'logo'        => Bootstrap::url() . 'inc/img/pluginrx-control-center.png',
                 'wp_repo'     => false,
             ],
             'pluginrx-agent' => [
@@ -60,15 +61,8 @@ class Integrations {
                 'url'         => 'https://pluginrx.com/plugin/pluginrx-agent/',
                 'description' => __( 'Required on each site managed by Control Center.', 'site-quality-check' ),
                 'integration' => __( 'Exposes this site\'s quality check data to your Control Center.', 'site-quality-check' ),
+                'logo'        => Bootstrap::url() . 'inc/img/pluginrx-agent.png',
                 'wp_repo'     => false,
-            ],
-            'broken-link-notifier' => [
-                'name'        => 'Broken Link Notifier',
-                'file'        => 'broken-link-notifier/broken-link-notifier.php',
-                'url'         => 'https://wordpress.org/plugins/broken-link-notifier/',
-                'description' => __( 'Scans and reports broken links.', 'site-quality-check' ),
-                'integration' => __( 'Adds a broken links widget to your dashboard with a live count.', 'site-quality-check' ),
-                'wp_repo'     => true,
             ],
             'admin-help-docs' => [
                 'name'        => 'Admin Help Docs',
@@ -76,38 +70,16 @@ class Integrations {
                 'url'         => 'https://wordpress.org/plugins/admin-help-docs/',
                 'description' => __( 'Add documentation directly inside wp-admin.', 'site-quality-check' ),
                 'integration' => __( 'Shares its color theme with Site Quality Check for a matching look.', 'site-quality-check' ),
+                'logo'        => Bootstrap::url() . 'inc/img/admin-help-docs.png',
                 'wp_repo'     => true,
             ],
-            'dev-debug-tools' => [
-                'name'        => 'Developer Debug Tools',
-                'file'        => 'dev-debug-tools/dev-debug-tools.php',
-                'url'         => 'https://wordpress.org/plugins/dev-debug-tools/',
-                'description' => __( 'Debug log viewer and developer utilities.', 'site-quality-check' ),
-                'integration' => __( 'Enables test mode, refreshing cached assets on every page load for easier development.', 'site-quality-check' ),
-                'wp_repo'     => true,
-            ],
-            'wcag-admin-accessibility-tools' => [
-                'name'        => 'WCAG Admin Accessibility Tools',
-                'file'        => 'wcag-admin-accessibility-tools/wcag-admin-accessibility-tools.php',
-                'url'         => 'https://wordpress.org/plugins/wcag-admin-accessibility-tools/',
-                'description' => __( 'Accessibility auditing tools for wp-admin.', 'site-quality-check' ),
-                'integration' => __( 'Complements the image alt-text audit with fuller WCAG checks.', 'site-quality-check' ),
-                'wp_repo'     => true,
-            ],
-            'fake-user-detector' => [
-                'name'        => 'Fake User Detector',
-                'file'        => 'fake-user-detector/fake-user-detector.php',
-                'url'         => 'https://wordpress.org/plugins/fake-user-detector/',
-                'description' => __( 'Flags likely fake or spam user registrations.', 'site-quality-check' ),
-                'integration' => __( 'No data integration currently — reserved for future use.', 'site-quality-check' ),
-                'wp_repo'     => true,
-            ],
-            'eri-file-library' => [
-                'name'        => 'ERI File Library',
-                'file'        => 'eri-file-library/eri-file-library.php',
-                'url'         => 'https://wordpress.org/plugins/eri-file-library/',
-                'description' => __( 'Centralized file/document library management.', 'site-quality-check' ),
-                'integration' => __( 'No data integration currently — reserved for future use.', 'site-quality-check' ),
+            'broken-link-notifier' => [
+                'name'        => 'Broken Link Notifier',
+                'file'        => 'broken-link-notifier/broken-link-notifier.php',
+                'url'         => 'https://wordpress.org/plugins/broken-link-notifier/',
+                'description' => __( 'Scans and reports broken links.', 'site-quality-check' ),
+                'integration' => __( 'Adds a broken links widget to your dashboard with a live count.', 'site-quality-check' ),
+                'logo'        => Bootstrap::url() . 'inc/img/broken-link-notifier.png',
                 'wp_repo'     => true,
             ],
             'clear-cache-everywhere' => [
@@ -115,10 +87,70 @@ class Integrations {
                 'file'        => 'clear-cache-everywhere/clear-cache-everywhere.php',
                 'url'         => 'https://wordpress.org/plugins/clear-cache-everywhere/',
                 'description' => __( 'One-click cache clearing across common host/plugin caches.', 'site-quality-check' ),
-                'integration' => __( 'Recommended after making bulk content updates from your checklist.', 'site-quality-check' ),
+                'integration' => __( 'Recommended after making bulk content updates from your checklist. Adds a clear cache button to the dashboard.', 'site-quality-check' ),
+                'logo'        => Bootstrap::url() . 'inc/img/clear-cache-everywhere.png',
                 'wp_repo'     => true,
             ],
+            // 'wcag-admin-accessibility-tools' => [
+            //     'name'        => 'WCAG Admin Accessibility Tools',
+            //     'file'        => 'wcag-admin-accessibility-tools/wcag-admin-accessibility-tools.php',
+            //     'url'         => 'https://wordpress.org/plugins/wcag-admin-accessibility-tools/',
+            //     'description' => __( 'Accessibility auditing tools for wp-admin.', 'site-quality-check' ),
+            //     'integration' => __( 'Complements the image alt-text audit with fuller WCAG checks.', 'site-quality-check' ),
+            //     'logo'        => Bootstrap::url() . 'inc/img/wcag-admin-accessibility-tools.png',
+            //     'wp_repo'     => true,
+            // ],
+            // 'fake-user-detector' => [
+            //     'name'        => 'Fake User Detector',
+            //     'file'        => 'fake-user-detector/fake-user-detector.php',
+            //     'url'         => 'https://wordpress.org/plugins/fake-user-detector/',
+            //     'description' => __( 'Flags likely fake or spam user registrations.', 'site-quality-check' ),
+            //     'integration' => __( 'No data integration currently — reserved for future use.', 'site-quality-check' ),
+            //     'logo'        => Bootstrap::url() . 'inc/img/fake-user-detector.png',
+            //     'wp_repo'     => true,
+            // ],
+            // 'eri-file-library' => [
+            //     'name'        => 'ERI File Library',
+            //     'file'        => 'eri-file-library/eri-file-library.php',
+            //     'url'         => 'https://wordpress.org/plugins/eri-file-library/',
+            //     'description' => __( 'Centralized file/document library management.', 'site-quality-check' ),
+            //     'integration' => __( 'No data integration currently — reserved for future use.', 'site-quality-check' ),
+            //     'logo'        => Bootstrap::url() . 'inc/img/eri-file-library.png',
+            //     'wp_repo'     => true,
+            // ],
+            // 'dev-debug-tools' => [
+            //     'name'        => 'Developer Debug Tools',
+            //     'file'        => 'dev-debug-tools/dev-debug-tools.php',
+            //     'url'         => 'https://wordpress.org/plugins/dev-debug-tools/',
+            //     'description' => __( 'Debug log viewer and developer utilities.', 'site-quality-check' ),
+            //     'integration' => __( 'Enables test mode, refreshing cached assets on every page load for easier development.', 'site-quality-check' ),
+            //     'logo'        => Bootstrap::url() . 'inc/img/dev-debug-tools.png',
+            //     'wp_repo'     => true,
+            // ],
         ];
+
+        /**
+         * Filter: sqc_integration_plugins
+         *
+         * Add your own plugin to the Site Quality Check Integrations page.
+         *
+         * @param array $plugins Array of plugin definitions, keyed by slug.
+         *
+         * Example:
+         *
+         * add_filter( 'sqc_integration_plugins', function ( $plugins ) {
+         *     $plugins[ 'my-plugin' ] = [
+         *         'name'        => 'My Plugin',
+         *         'file'        => 'my-plugin/my-plugin.php',
+         *         'url'         => 'https://example.com/my-plugin/',
+         *         'description' => 'What it does.',
+         *         'integration' => 'How it integrates with Site Quality Check.',
+         *         'wp_repo'     => true,
+         *     ];
+         *     return $plugins;
+         * } );
+         */
+        return apply_filters( 'sqc_integration_plugins', $plugins );
     } // End get_plugin_list()
 
 
@@ -135,6 +167,23 @@ class Integrations {
 
         return is_plugin_active( $plugin_file );
     } // End is_active()
+
+
+    /**
+     * Check if a plugin is installed (file exists) regardless of activation status.
+     *
+     * @param string $plugin_file
+     * @return bool
+     */
+    public static function is_installed( string $plugin_file ) : bool {
+        if ( ! function_exists( 'get_plugins' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        $all_plugins = get_plugins();
+
+        return isset( $all_plugins[ $plugin_file ] );
+    } // End is_installed()
 
 
     /**
@@ -260,22 +309,54 @@ class Integrations {
             Bootstrap::script_version()
         );
 
+        wp_enqueue_script( 'updates' );
+        wp_enqueue_script(
+            'sqc-integrations',
+            Bootstrap::url() . 'inc/js/integrations.js',
+            [ 'jquery', 'updates' ],
+            Bootstrap::script_version(),
+            true
+        );
+
+        wp_localize_script( 'sqc-integrations', 'sqcIntegrations', [
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 'sqc_integrations_nonce' ),
+        ] );
+
         $plugins = self::get_plugin_list();
         ?>
         <div class="wrap sqc-content-wrap sqc-integrations">
+            <p><?php esc_html_e( 'Site Quality Check works great on its own, but pairs with these plugins to add extra features. Install, activate, or learn more about each one below.', 'site-quality-check' ); ?></p>
+
             <div class="sqc-integrations-list">
                 <?php foreach ( $plugins as $slug => $plugin ) : ?>
-                    <?php $is_active = self::is_active( $plugin[ 'file' ] ); ?>
+                    <?php
+                    $plugin_file = $plugin[ 'file' ] ?? '';
+                    $is_active = self::is_active( $plugin_file );
+                    $is_installed = self::is_installed( $plugin_file );
+                    ?>
                     <div class="sqc-integration-card">
-                        <h2><?php echo esc_html( $plugin[ 'name' ] ); ?></h2>
-                        <p><?php echo esc_html( $plugin[ 'description' ] ); ?></p>
-                        <p class="sqc-integration-detail"><strong><?php esc_html_e( 'Integration:', 'site-quality-check' ); ?></strong> <?php echo esc_html( $plugin[ 'integration' ] ); ?></p>
-
-                        <?php if ( $is_active ) : ?>
-                            <span class="sqc-badge sqc-badge-success"><?php esc_html_e( 'Installed', 'site-quality-check' ); ?></span>
-                        <?php else : ?>
-                            <a class="button button-secondary" href="<?php echo esc_url( $plugin[ 'url' ] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get Plugin', 'site-quality-check' ); ?></a>
-                        <?php endif; ?>
+                        <div class="sqc-integration-card-header">
+                            <?php if ( ! empty( $plugin[ 'logo' ] ) ) : ?>
+                                <img src="<?php echo esc_url( $plugin[ 'logo' ] ); ?>" alt="" class="logo">
+                            <?php endif; ?>
+                            <h2><?php echo esc_html( $plugin[ 'name' ] ); ?></h2>
+                        </div>
+                        <div class="sqc-integration-card-body">
+                            <p><?php echo esc_html( $plugin[ 'description' ] ); ?></p>
+                            <p class="sqc-integration-detail"><strong><?php esc_html_e( 'Integration:', 'site-quality-check' ); ?></strong> <?php echo esc_html( $plugin[ 'integration' ] ); ?></p>
+                        </div>
+                        <div class="sqc-integration-card-footer">
+                            <?php if ( $is_active ) : ?>
+                                <span class="sqc-badge sqc-badge-success"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Active', 'site-quality-check' ); ?></span>
+                            <?php elseif ( $is_installed ) : ?>
+                                <button type="button" class="sqc-button sqc-button-wp-blue sqc-activate-plugin" data-file="<?php echo esc_attr( $plugin_file ); ?>"><?php esc_html_e( 'Activate', 'site-quality-check' ); ?></button>
+                            <?php elseif ( $plugin[ 'wp_repo' ] ?? false ) : ?>
+                                <button type="button" class="sqc-button sqc-install-plugin" data-slug="<?php echo esc_attr( $slug ); ?>" data-installed-file="<?php echo esc_attr( $plugin_file ); ?>"><?php esc_html_e( 'Install Now', 'site-quality-check' ); ?></button>
+                            <?php else : ?>
+                                <a class="sqc-button" href="<?php echo esc_url( $plugin[ 'url' ] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get Plugin', 'site-quality-check' ); ?></a>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -298,6 +379,34 @@ class Integrations {
 
         return is_array( $colors ) && ! empty( $colors ) ? $colors : null;
     } // End get_admin_help_docs_colors()
+
+
+    /**
+     * AJAX: activate a plugin by its file path.
+     *
+     * @return void
+     */
+    public function ajax_activate_plugin() : void {
+        check_ajax_referer( 'sqc_integrations_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'activate_plugins' ) ) {
+            wp_send_json_error( __( 'You do not have permission to do this.', 'site-quality-check' ) );
+        }
+
+        $plugin_file = sanitize_text_field( wp_unslash( $_POST[ 'plugin_file' ] ?? '' ) );
+
+        if ( ! $plugin_file ) {
+            wp_send_json_error( __( 'Missing plugin file.', 'site-quality-check' ) );
+        }
+
+        $result = activate_plugin( $plugin_file );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success();
+    } // End ajax_activate_plugin()
 
 } // End class Integrations
 

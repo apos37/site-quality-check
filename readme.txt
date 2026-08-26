@@ -53,8 +53,8 @@ Depending on the section's recurrence (daily, weekly, monthly, quarterly, annual
 = What's the difference between snoozing and omitting an item? =
 Snoozing hides an item until its next recurrence cycle, then it reappears. Omitting hides it permanently.
 
-= Does this replace Broken Link Notifier or Yoast SEO? =
-No. It integrates with them when installed but does not duplicate their functionality.
+= How do I change how many days before content is considered stale? =
+Go to Quality Check > Settings and find the Stale Content Thresholds box. You can set the number of days for Warning, Danger, and Critical independently — content is flagged once it passes the Warning threshold, and moves into Danger and then Critical as it ages further without being updated.
 
 = Will uninstalling this plugin delete my data? =
 Only if you've checked "Delete all plugin data when this plugin is deleted" under Quality Check > Advanced. This is unchecked by default.

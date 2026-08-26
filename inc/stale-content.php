@@ -51,6 +51,8 @@ class StaleContent {
     private function __construct() {
         add_action( 'wp_ajax_sqc_omit_stale_post', [ $this, 'ajax_omit_post' ] );
         add_action( 'wp_ajax_sqc_unomit_stale_post', [ $this, 'ajax_unomit_post' ] );
+        add_action( 'sqc_subheader_left', [ $this, 'render_subheader_toggle' ] );
+        add_action( 'sqc_subheader_right', [ $this, 'render_subheader_search' ] );
     } // End __construct()
 
 
@@ -228,7 +230,7 @@ class StaleContent {
     public function ajax_omit_post() : void {
         check_ajax_referer( 'sqc_stale_content_nonce', 'nonce' );
 
-        if ( ! Access::can_manage() ) {
+        if ( ! Access::can_access() ) {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to do this.', 'site-quality-check' ) ], 403 );
         }
 
@@ -248,7 +250,7 @@ class StaleContent {
     public function ajax_unomit_post() : void {
         check_ajax_referer( 'sqc_stale_content_nonce', 'nonce' );
 
-        if ( ! Access::can_manage() ) {
+        if ( ! Access::can_access() ) {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to do this.', 'site-quality-check' ) ], 403 );
         }
 
@@ -260,13 +262,71 @@ class StaleContent {
     } // End ajax_unomit_post()
 
 
-        /**
+    /**
+     * Render the "Show Omitted" / "Show Stale Content" toggle in the subheader (left side).
+     *
+     * @param string $active_page
+     * @return void
+     */
+    public function render_subheader_toggle( string $active_page ) : void {
+        if ( Menu::MENU_SLUG . '-stale-content' !== $active_page ) {
+            return;
+        }
+
+        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ];
+        $omitted_count = count( self::get_omitted_posts() );
+        ?>
+        <?php if ( $showing_omitted ) : ?>
+            <a href="<?php echo esc_url( remove_query_arg( 'sqc_view' ) ); ?>" class="sqc-button"><?php esc_html_e( 'Show Stale Content', 'site-quality-check' ); ?></a>
+        <?php else : ?>
+            <a href="<?php echo esc_url( add_query_arg( 'sqc_view', 'omitted' ) ); ?>" class="sqc-button"><?php echo esc_html( sprintf(
+                /* translators: %d: number of omitted items */
+                __( 'Show Omitted (%d)', 'site-quality-check' ),
+                $omitted_count
+            ) ); ?></a>
+        <?php endif; ?>
+        <?php
+    } // End render_subheader_toggle()
+
+
+    /**
+     * Render the search box in the subheader (right side).
+     *
+     * @param string $active_page
+     * @return void
+     */
+    public function render_subheader_search( string $active_page ) : void {
+        if ( Menu::MENU_SLUG . '-stale-content' !== $active_page ) {
+            return;
+        }
+
+        $search_value = sanitize_text_field( wp_unslash( $_GET[ 's' ] ?? '' ) );
+        ?>
+        <form method="get" class="sqc-posttype-search">
+            <?php foreach ( $_GET as $key => $value ) :
+                if ( in_array( $key, [ 's', 'paged' ], true ) ) continue;
+            ?>
+                <input type="hidden" name="<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $value ); ?>">
+            <?php endforeach; ?>
+
+            <input type="search" name="s" value="<?php echo esc_attr( $search_value ); ?>" placeholder="<?php esc_attr_e( 'Search', 'site-quality-check' ); ?>" class="sqc-search-input">
+            <button type="submit" class="sqc-button"><?php esc_html_e( 'Search', 'site-quality-check' ); ?></button>
+
+            <?php if ( $search_value ) : ?>
+                <a href="<?php echo esc_url( remove_query_arg( 's' ) ); ?>" class="sqc-button"><?php esc_html_e( 'Clear', 'site-quality-check' ); ?></a>
+            <?php endif; ?>
+        </form>
+        <?php
+    } // End render_subheader_search()
+
+
+    /**
      * Render the Stale Content admin page.
      *
      * @return void
      */
     public static function render_page() : void {
-        if ( ! current_user_can( 'edit_posts' ) ) {
+        if ( ! Access::can_access() ) {
             wp_die( esc_html__( 'You do not have permission to view this page.', 'site-quality-check' ) );
         }
 
@@ -283,37 +343,27 @@ class StaleContent {
             'nonce'   => wp_create_nonce( 'sqc_stale_content_nonce' ),
         ] );
 
-        $sort_desc = ! isset( $_GET[ 'sqc_sort' ] ) || 'desc' === $_GET[ 'sqc_sort' ];
-        $stale = self::get_stale_content( $sort_desc );
+        $table = new StaleContentListTable();
+        $table->prepare_items();
         ?>
         <div class="wrap sqc-content-wrap sqc-stale-content">
-            <?php if ( empty( $stale ) ) : ?>
-                <p><?php esc_html_e( 'No stale content found.', 'site-quality-check' ); ?></p>
-            <?php else : ?>
-                <table class="wp-list-table widefat fixed striped">
-                    <thead>
-                        <tr>
-                            <th><?php esc_html_e( 'Title', 'site-quality-check' ); ?></th>
-                            <th><?php esc_html_e( 'Type', 'site-quality-check' ); ?></th>
-                            <th><?php esc_html_e( 'Last Modified', 'site-quality-check' ); ?></th>
-                            <th><?php esc_html_e( 'Status', 'site-quality-check' ); ?></th>
-                            <th><?php esc_html_e( 'Actions', 'site-quality-check' ); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ( $stale as $item ) : ?>
-                            <?php $post = $item[ 'post' ]; ?>
-                            <tr>
-                                <td><a href="<?php echo esc_url( get_edit_post_link( $post->ID ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a></td>
-                                <td><?php echo esc_html( get_post_type_object( $post->post_type )->labels->singular_name ); ?></td>
-                                <td><?php echo esc_html( get_the_modified_date( '', $post ) ); ?> (<?php echo esc_html( $item[ 'days_stale' ] ); ?> <?php esc_html_e( 'days', 'site-quality-check' ); ?>)</td>
-                                <td><span class="sqc-badge sqc-badge-<?php echo esc_attr( $item[ 'tier' ] ); ?>"><?php echo esc_html( ucfirst( $item[ 'tier' ] ) ); ?></span></td>
-                                <td><button type="button" class="button sqc-omit-post" data-post-id="<?php echo esc_attr( $post->ID ); ?>"><?php esc_html_e( 'Omit', 'site-quality-check' ); ?></button></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <?php $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ]; ?>
+
+            <?php if ( $showing_omitted ) : ?>
+                <div class="sqc-omitted-banner">
+                    <span class="dashicons dashicons-hidden"></span>
+                    <?php esc_html_e( 'Showing omitted items — these are excluded from the stale content list above.', 'site-quality-check' ); ?>
+                </div>
             <?php endif; ?>
+
+            <div class="sqc-box">
+                <div class="sqc-box-body">
+                    <form method="get">
+                        <input type="hidden" name="page" value="<?php echo esc_attr( Menu::MENU_SLUG . '-stale-content' ); ?>">
+                        <?php $table->display(); ?>
+                    </form>
+                </div>
+            </div>
         </div>
         <?php
     } // End render_page()

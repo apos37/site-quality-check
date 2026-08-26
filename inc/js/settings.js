@@ -142,6 +142,13 @@
             } );
         }
 
+        if ( settings.hasOwnProperty( 'allowed_roles' ) ) {
+            $( '[name="sqc_allowed_roles[]"]' ).prop( 'checked', false );
+            settings.allowed_roles.forEach( function ( role ) {
+                $( '[name="sqc_allowed_roles[]"][value="' + role + '"]' ).prop( 'checked', true );
+            } );
+        }
+
         if ( settings.hasOwnProperty( 'clear_data_on_uninstall' ) ) {
             $( '[name="sqc_clear_data_on_uninstall"]' ).prop( 'checked', !! settings.clear_data_on_uninstall );
         }

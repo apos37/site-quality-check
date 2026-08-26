@@ -7,16 +7,85 @@
 
 .sqc-integration-card {
     background: #fff;
-    border: 1px solid #dcdcde;
-    padding: 16px;
+    border: none;
+    border-radius: var( --sqc-radius );
+    box-shadow: 0px 1px 2px rgba( 16, 24, 40, .1 );
+    display: flex;
+    flex-direction: column;
+    padding: 0;
 }
 
-.sqc-integration-card h2 {
+.sqc-integration-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sqc-integration-card-header img.logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.sqc-integration-card-header h2 {
     font-size: 15px;
+    margin: 0;
+}
+
+.sqc-integration-card-footer .sqc-button,
+.sqc-integration-card-footer .sqc-badge-success {
+    height: 32px !important;
+    padding: 0px 12px !important;
+}
+
+.sqc-badge-success {
+    line-height: 1 !important;
+    border-radius: 6px !important;
+    font-size: 0.80rem !important;
+    font-weight: 500 !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #d5d5d5 !important;
+    color: #999 !important;
+    cursor: not-allowed;
+}
+
+.sqc-button.sqc-button-wp-blue {
+    background: #2271b1 !important;
+}
+
+.sqc-button.sqc-button-wp-blue:hover {
+    background: #135e96 !important;
+}
+
+.sqc-button.sqc-button-loading {
+    padding: 5px 12px !important;
+}
+
+.sqc-button.sqc-button-loading .dashicons {
+    margin: 0 5px 0 -2px !important;
+    color: var( --sqc-color-button-font ) !important;
+}
+
+.sqc-integration-card-body {
+    padding: 16px 20px;
+    flex: 1;
+}
+
+.sqc-integration-card-body p {
     margin: 0 0 8px;
 }
 
 .sqc-integration-detail {
     font-size: 13px;
     color: #50575e;
+}
+
+.sqc-integration-card-footer {
+    padding: 14px 20px;
+    border-top: 1px solid #f0f0f1;
 }
