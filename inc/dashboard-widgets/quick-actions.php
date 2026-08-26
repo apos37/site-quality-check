@@ -37,7 +37,7 @@ function render_quick_actions_widget() : void {
         'sqcheck-quick-actions',
         Bootstrap::url() . 'inc/js/quick-actions.js',
         [ 'jquery' ],
-        Bootstrap::version(),
+        Bootstrap::script_version(),
         true
     );
 
