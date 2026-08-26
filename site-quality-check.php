@@ -69,6 +69,7 @@ final class Bootstrap {
         'stale-content.php',
         'broken-links.php',
         'quick-actions.php',
+        'content-audits.php',
     ];
 
 

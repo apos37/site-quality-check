@@ -18,6 +18,7 @@ add_filter( 'sqc_dashboard_widgets', function ( array $widgets ) : array {
     $widgets[ 'broken_links' ] = [
         'title'    => __( 'Broken Links', 'site-quality-check' ),
         'priority' => 30,
+        'url'      => Integrations::get_broken_link_notifier_url(),
         'callback' => __NAMESPACE__ . '\\render_broken_links_widget',
     ];
 
@@ -35,10 +36,4 @@ function render_broken_links_widget() : void {
 
     echo '<p class="sqc-score">' . esc_html( $count ) . '</p>';
     echo '<p>' . esc_html__( 'broken links found', 'site-quality-check' ) . '</p>';
-
-    $url = Integrations::get_broken_link_notifier_url();
-
-    if ( $url ) {
-        echo '<p><a href="' . esc_url( $url ) . '">' . esc_html__( 'View results', 'site-quality-check' ) . '</a></p>';
-    }
 } // End render_broken_links_widget()

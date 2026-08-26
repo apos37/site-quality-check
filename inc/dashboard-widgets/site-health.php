@@ -46,6 +46,9 @@ function render_site_health_widget() : void {
         echo '<p>' . esc_html__( 'Nothing due right now.', 'site-quality-check' ) . '</p>';
     } else {
         echo '<p class="sqc-score">' . esc_html( $percent ) . '%</p>';
+
+        echo '<div class="sqc-progress-bar"><div class="sqc-progress-bar-fill" style="width: ' . esc_attr( $percent ) . '%;"></div></div>';
+
         echo '<p>' . esc_html( sprintf(
             /* translators: 1: completed items, 2: total items */
             __( '%1$d of %2$d checklist items complete', 'site-quality-check' ),

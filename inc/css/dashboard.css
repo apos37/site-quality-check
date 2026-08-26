@@ -7,31 +7,88 @@
 
 .sqc-widget {
     background: #fff;
-    border: 1px solid #dcdcde;
-    padding: 16px;
-}
-
-.sqc-widget h2 {
-    font-size: 14px;
-    margin: 0 0 12px;
-}
-
-.sqc-checklist-summary-list {
-    list-style: none;
-    margin: 0;
+    border: none;
+    border-radius: var( --sqc-radius );
+    box-shadow: 0px 1px 2px rgba( 16, 24, 40, .1 );
     padding: 0;
 }
 
-.sqc-checklist-summary-list li {
+.sqc-widget-header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.sqc-widget-header h2 {
+    margin: 0 !important;
+    padding: 0 !important;
+    border-top: 0 !important;
+    font-size: 14px;
+}
+
+.sqc-widget-goto {
+    color: var( --sqc-color-header-tab );
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.sqc-widget-goto .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.sqc-widget-goto:hover {
+    color: var( --sqc-color-accent );
+}
+
+.sqc-widget-body {
+    padding: 20px;
+}
+
+.sqc-plain-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+}
+
+.sqc-plain-list li {
     padding: 6px 0;
     border-bottom: 1px solid #f0f0f1;
 }
 
-.sqc-checklist-summary-list li:last-child {
+.sqc-plain-list li:last-child {
     border-bottom: none;
 }
+
+.sqc-count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.sqc-count-pill-zero {
+    background: #fff;
+    border: 1px solid #d0d5dd;
+    color: #667085;
+}
+
+.sqc-count-pill-active {
+    background: #d63638;
+    color: #fff;
+}
+
+/* Stale Content widget */
 
 .sqc-stale-counts {
     list-style: none;
@@ -66,4 +123,46 @@
     background: #fcf0f1;
     border: 1px solid #d63638;
     color: #8a1f1f;
+}
+
+/* Progress bar */
+
+.sqc-progress-bar {
+    background: #f0f0f1;
+    border-radius: 6px;
+    height: 8px;
+    overflow: hidden;
+    margin: 8px 0 12px;
+}
+
+.sqc-progress-bar-fill {
+    background: var( --sqc-color-accent );
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.sqc-mini-progress-bar {
+    display: block;
+    background: #f0f0f1;
+    border-radius: 4px;
+    height: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.sqc-mini-progress-bar-fill {
+    display: block;
+    background: var( --sqc-color-accent );
+    height: 100%;
+    border-radius: 4px;
+}
+
+/* Checklist Summary */
+
+.sqc-checklist-row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }

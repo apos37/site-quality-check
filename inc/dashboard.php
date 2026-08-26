@@ -33,8 +33,59 @@ class Dashboard {
      * Constructor
      */
     private function __construct() {
-        // Widget files hook themselves in on 'plugins_loaded' via Bootstrap::load_dashboard_widgets().
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
     } // End __construct()
+
+
+    /**
+     * Enqueue dashboard-specific CSS, only on the Dashboard screen.
+     *
+     * @param string $hook
+     * @return void
+     */
+    public function enqueue_assets( string $hook ) : void {
+        $screen = get_current_screen();
+
+        if ( ! $screen || 'toplevel_page_' . Menu::MENU_SLUG !== $screen->id ) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'sqc-dashboard',
+            Bootstrap::url() . 'inc/css/dashboard.css',
+            [ 'sqc-theme' ],
+            Bootstrap::script_version()
+        );
+    } // End enqueue_assets()
+
+
+    /**
+     * Render the dashboard page: all registered widgets in a grid.
+     *
+     * @return void
+     */
+    public static function render() : void {
+        $widgets = self::get_widgets();
+        ?>
+        <div class="wrap sqc-content-wrap sqc-dashboard">
+            <div class="sqc-dashboard-grid">
+                <?php foreach ( $widgets as $slug => $widget ) : ?>
+                    <div class="sqc-widget sqc-widget-<?php echo esc_attr( $slug ); ?>">
+                        <div class="sqc-widget-header">
+                            <h2><?php echo esc_html( $widget[ 'title' ] ); ?></h2>
+                            <?php if ( ! empty( $widget[ 'url' ] ) ) : ?>
+                                <a href="<?php echo esc_url( $widget[ 'url' ] ); ?>" class="sqc-widget-goto" title="<?php esc_attr_e( 'View', 'site-quality-check' ); ?>"><span class="dashicons dashicons-external"></span></a>
+                            <?php endif; ?>
+                        </div>
+                        <div class="sqc-widget-body">
+                            <?php call_user_func( $widget[ 'callback' ] ); ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php
+    } // End render()
 
 
     /**
@@ -84,36 +135,6 @@ class Dashboard {
 
         return $widgets;
     } // End get_widgets()
-
-
-    /**
-     * Render the dashboard page: all registered widgets in a grid.
-     *
-     * @return void
-     */
-    public static function render() : void {
-        $widgets = self::get_widgets();
-        wp_enqueue_style(
-            'sqc-dashboard',
-            Bootstrap::url() . 'inc/css/dashboard.css',
-            [ 'sqc-theme' ],
-            Bootstrap::script_version()
-        );
-        ?>
-        <div class="wrap sqc-content-wrap sqc-dashboard">
-            <div class="sqc-dashboard-grid">
-                <?php foreach ( $widgets as $slug => $widget ) : ?>
-                    <div class="sqc-widget sqc-widget-<?php echo esc_attr( $slug ); ?>">
-                        <h2><?php echo esc_html( $widget[ 'title' ] ); ?></h2>
-                        <div class="sqc-widget-body">
-                            <?php call_user_func( $widget[ 'callback' ] ); ?>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <?php
-    } // End render()
 
 } // End class Dashboard
 

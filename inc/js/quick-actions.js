@@ -13,7 +13,7 @@
             var action = button.data( 'action' );
             var originalText = button.text();
 
-            button.prop( 'disabled', true ).text( sqcQuickActions.i18n.running );
+            button.prop( 'disabled', true ).addClass( 'sqc-button-loading' ).html( '<span class="dashicons dashicons-update spin"></span> ' + sqcQuickActions.i18n.running );
 
             $.post( sqcQuickActions.ajaxUrl, {
                 action: 'sqc_run_quick_action',
@@ -30,7 +30,7 @@
                     showToast( 'Request failed.', false );
                 } )
                 .always( function () {
-                    button.prop( 'disabled', false ).text( originalText );
+                    button.prop( 'disabled', false ).removeClass( 'sqc-button-loading' ).text( originalText );
                 } );
         } );
     } );
