@@ -126,7 +126,7 @@ class StaleContent {
                     'before' => $cutoff,
                 ],
             ],
-            'meta_query'     => [
+            'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
                 [
                     'key'     => self::OMIT_META_KEY,
                     'compare' => 'NOT EXISTS',
@@ -212,7 +212,7 @@ class StaleContent {
             'post_type'      => self::get_included_post_types(),
             'post_status'    => 'publish',
             'posts_per_page' => -1,
-            'meta_query'     => [
+            'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
                 [
                     'key'     => self::OMIT_META_KEY,
                     'compare' => 'EXISTS',
@@ -234,7 +234,7 @@ class StaleContent {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to do this.', 'site-quality-check' ) ], 403 );
         }
 
-        $post_id = (int) ( $_POST[ 'post_id' ] ?? 0 );
+        $post_id = (int) wp_unslash( $_POST[ 'post_id' ] ?? 0 );
 
         self::omit_post( $post_id );
 
@@ -254,7 +254,7 @@ class StaleContent {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to do this.', 'site-quality-check' ) ], 403 );
         }
 
-        $post_id = (int) ( $_POST[ 'post_id' ] ?? 0 );
+        $post_id = (int) wp_unslash( $_POST[ 'post_id' ] ?? 0 );
 
         self::unomit_post( $post_id );
 
@@ -273,7 +273,7 @@ class StaleContent {
             return;
         }
 
-        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ];
+        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
         $omitted_count = count( self::get_omitted_posts() );
         ?>
         <?php if ( $showing_omitted ) : ?>
@@ -300,10 +300,10 @@ class StaleContent {
             return;
         }
 
-        $search_value = sanitize_text_field( wp_unslash( $_GET[ 's' ] ?? '' ) );
+        $search_value = sanitize_text_field( wp_unslash( $_GET[ 's' ] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
         ?>
         <form method="get" class="sqc-posttype-search">
-            <?php foreach ( $_GET as $key => $value ) :
+            <?php foreach ( $_GET as $key => $value ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
                 if ( in_array( $key, [ 's', 'paged' ], true ) ) continue;
             ?>
                 <input type="hidden" name="<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $value ); ?>">
@@ -345,10 +345,9 @@ class StaleContent {
 
         $table = new StaleContentListTable();
         $table->prepare_items();
+        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
         ?>
         <div class="wrap sqc-content-wrap sqc-stale-content">
-            <?php $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ]; ?>
-
             <?php if ( $showing_omitted ) : ?>
                 <div class="sqc-omitted-banner">
                     <span class="dashicons dashicons-hidden"></span>

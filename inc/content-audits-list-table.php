@@ -44,7 +44,7 @@ class ContentAuditsListTable extends \WP_List_Table {
     public function __construct( string $audit_type, callable $details_renderer ) {
         $this->audit_type = $audit_type;
         $this->details_renderer = $details_renderer;
-        $this->showing_omitted = isset( $_REQUEST[ 'sqc_view' ] ) && 'omitted' === $_REQUEST[ 'sqc_view' ];
+        $this->showing_omitted = isset( $_REQUEST[ 'sqc_view' ] ) && 'omitted' === $_REQUEST[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
         parent::__construct( [
             'singular' => 'audit_result',
@@ -159,7 +159,7 @@ class ContentAuditsListTable extends \WP_List_Table {
         }
 
         global $wpdb;
-        $ids = array_map( 'absint', (array) ( $_REQUEST[ 'result_ids' ] ?? [] ) );
+        $ids = array_map( 'absint', (array) ( $_REQUEST[ 'result_ids' ] ?? [] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified via check_admin_referer above.
 
         if ( empty( $ids ) ) {
             return;
@@ -168,8 +168,8 @@ class ContentAuditsListTable extends \WP_List_Table {
         $table = $wpdb->prefix . 'sqc_audit_results';
         $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
-        $wpdb->query( $wpdb->prepare(
-            "UPDATE {$table} SET omitted = %d WHERE id IN ({$placeholders})",
+        $wpdb->query( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            "UPDATE {$table} SET omitted = %d WHERE id IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is hardcoded, $placeholders are %d format specifiers, not raw values.
             array_merge( [ 'omit' === $action ? 1 : 0 ], $ids )
         ) );
     } // End process_bulk_action()

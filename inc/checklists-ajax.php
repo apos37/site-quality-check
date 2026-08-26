@@ -75,7 +75,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function set_item_status() : void {
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
         $status = sanitize_text_field( wp_unslash( $_POST[ 'status' ] ?? '' ) );
 
@@ -108,7 +108,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function save_item_label() : void {
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
 
@@ -136,7 +136,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function add_item() : void {
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $section_id = sanitize_text_field( wp_unslash( $_POST[ 'section_id' ] ?? '' ) );
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
 
@@ -180,7 +180,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function delete_item() : void {
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
 
         $this->guard();
@@ -207,7 +207,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function move_item() : void {
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $item_id = sanitize_text_field( wp_unslash( $_POST[ 'item_id' ] ?? '' ) );
         $new_section_id = sanitize_text_field( wp_unslash( $_POST[ 'new_section_id' ] ?? '' ) );
         $item_ids = array_map( 'sanitize_text_field', wp_unslash( (array) ( $_POST[ 'item_ids' ] ?? [] ) ) );
@@ -261,7 +261,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function add_section() : void {
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
         $recurrence = sanitize_text_field( wp_unslash( $_POST[ 'recurrence' ] ?? 'daily' ) );
 
@@ -304,7 +304,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function save_section() : void {
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $section_id = sanitize_text_field( wp_unslash( $_POST[ 'section_id' ] ?? '' ) );
         $label = sanitize_text_field( wp_unslash( $_POST[ 'label' ] ?? '' ) );
         $recurrence = sanitize_text_field( wp_unslash( $_POST[ 'recurrence' ] ?? 'daily' ) );
@@ -338,7 +338,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function delete_section() : void {
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $section_id = sanitize_text_field( wp_unslash( $_POST[ 'section_id' ] ?? '' ) );
 
         $this->guard();
@@ -362,7 +362,7 @@ class ChecklistsAjax {
      * @return void
      */
     public function reorder_sections() : void {
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $section_ids = array_map( 'sanitize_text_field', wp_unslash( (array) ( $_POST[ 'section_ids' ] ?? [] ) ) );
 
         $this->guard();
@@ -422,7 +422,7 @@ class ChecklistsAjax {
     public function save_checklist() : void {
         $this->guard();
 
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
         $title = sanitize_text_field( wp_unslash( $_POST[ 'title' ] ?? '' ) );
 
         wp_update_post( [
@@ -444,7 +444,7 @@ class ChecklistsAjax {
     public function delete_checklist() : void {
         $this->guard();
 
-        $checklist_id = (int) ( $_POST[ 'checklist_id' ] ?? 0 );
+        $checklist_id = (int) wp_unslash( $_POST[ 'checklist_id' ] ?? 0 );
 
         wp_delete_post( $checklist_id, true );
 

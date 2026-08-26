@@ -245,7 +245,7 @@ class QuickActions {
 
         $params = stream_context_get_params( $socket );
         $cert = openssl_x509_parse( $params[ 'options' ][ 'ssl' ][ 'peer_certificate' ] );
-        fclose( $socket );
+        fclose( $socket ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- this is a network socket, not a filesystem handle.
 
         if ( ! $cert || empty( $cert[ 'validTo_time_t' ] ) ) {
             return [ 'success' => false, 'message' => __( 'Could not read SSL certificate.', 'site-quality-check' ) ];

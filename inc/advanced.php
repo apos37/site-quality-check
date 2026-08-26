@@ -159,7 +159,7 @@ class Advanced {
         ];
 
         foreach ( $messages as $param => $options ) {
-            if ( ! isset( $_GET[ $param ] ) ) {
+            if ( ! isset( $_GET[ $param ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
                 continue;
             }
 

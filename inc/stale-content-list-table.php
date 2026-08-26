@@ -201,7 +201,7 @@ class StaleContentListTable extends \WP_List_Table {
      * @return void
      */
     public function prepare_items() : void {
-        $this->showing_omitted = isset( $_REQUEST[ 'sqc_view' ] ) && 'omitted' === $_REQUEST[ 'sqc_view' ];
+        $this->showing_omitted = isset( $_REQUEST[ 'sqc_view' ] ) && 'omitted' === $_REQUEST[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
         $this->process_bulk_action();
 

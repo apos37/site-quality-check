@@ -134,11 +134,13 @@ class ContentAudits {
             return;
         }
 
-        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ];
+        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
         $omitted_count = count( Audits::get_results( $current_tab, true ) );
         ?>
         <span id="sqc-audit-last-checked" data-audit-type="<?php echo esc_attr( $current_tab ); ?>">
-            <?php echo esc_html( sprintf( __( 'Last checked: %s', 'site-quality-check' ), Audits::get_last_checked_display( $current_tab ) ) ); ?>
+            <?php 
+            /* translators: %s: date the audit was last checked */
+            echo esc_html( sprintf( __( 'Last checked: %s', 'site-quality-check' ), Audits::get_last_checked_display( $current_tab ) ) ); ?>
         </span>
 
         <button type="button" class="sqc-button sqc-refresh-audit" id="sqc-refresh-audit" data-audit-type="<?php echo esc_attr( $current_tab ); ?>" title="<?php esc_attr_e( 'Rescan', 'site-quality-check' ); ?>">
@@ -222,7 +224,7 @@ class ContentAudits {
         ] );
 
         $current_tab = self::get_current_tab();
-        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ];
+        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
         if ( 'seo_meta' === $current_tab && ! Integrations::is_yoast_active() ) {
             ?>

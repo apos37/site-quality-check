@@ -435,7 +435,7 @@ class Checklists {
             return;
         }
 
-        $active_id = isset( $_GET[ 'checklist' ] ) ? (int) $_GET[ 'checklist' ] : (int) get_user_meta( get_current_user_id(), 'sqc_last_checklist', true );
+        $active_id = isset( $_GET[ 'checklist' ] ) ? (int) $_GET[ 'checklist' ] : (int) get_user_meta( get_current_user_id(), 'sqc_last_checklist', true ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab selector, no state change.
         $active_ids = wp_list_pluck( $checklists, 'ID' );
 
         if ( ! in_array( $active_id, $active_ids, true ) ) {
@@ -486,15 +486,14 @@ class Checklists {
      * @param bool $is_active
      * @return void
      */
-        private static function render_checklist_panel( \WP_Post $checklist, bool $is_active ) : void {
+    private static function render_checklist_panel( \WP_Post $checklist, bool $is_active ) : void {
         $sections = self::get_sections( $checklist->ID );
-        $panel_style = $is_active ? '' : ' style="display:none;"';
 
         $created_by = get_userdata( $checklist->post_author );
         $modified_by_id = (int) get_post_meta( $checklist->ID, 'sqc_last_modified_by', true );
         $modified_by = $modified_by_id ? get_userdata( $modified_by_id ) : null;
         ?>
-        <div class="sqc-checklist-panel" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>"<?php echo $panel_style; ?>>
+        <div class="sqc-checklist-panel" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>" <?php echo $is_active ? '' : 'style="display:none;"'; ?>>
             <div class="sqc-checklist-header">
                 <h2 class="sqc-checklist-title"><?php echo esc_html( $checklist->post_title ); ?></h2>
                 <div class="sqc-checklist-tools">
@@ -613,7 +612,9 @@ class Checklists {
             <span class="sqc-item-label"><?php echo esc_html( $item[ 'label' ] ); ?></span>
 
             <span class="sqc-item-snoozed-badge" <?php echo $is_snoozed ? '' : 'style="display:none;"'; ?>>
-                <?php echo esc_html( sprintf( __( 'Snoozed until %s', 'site-quality-check' ), Helpers::format_date( $item[ 'snoozed_until' ] ?? null ) ) ); ?>
+                <?php 
+                /* translators: %s: date the item will reappear */
+                echo esc_html( sprintf( __( 'Snoozed until %s', 'site-quality-check' ), Helpers::format_date( $item[ 'snoozed_until' ] ?? null ) ) ); ?>
             </span>
 
             <span class="sqc-item-actions-persistent">

@@ -73,9 +73,10 @@ class Audits {
 
         $post_types = StaleContent::get_included_post_types();
         $placeholders = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
+        $table = self::table();
 
         $omitted_ids = $wpdb->get_col( $wpdb->prepare(
-            "SELECT post_id FROM " . self::table() . " WHERE audit_type = %s AND omitted = 1",
+            "SELECT post_id FROM {$table} WHERE audit_type = %s AND omitted = 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is a hardcoded prefix + constant, not user input.
             $audit_type
         ) );
 
@@ -88,7 +89,7 @@ class Audits {
             $params = array_merge( $params, $omitted_ids );
         }
 
-        return array_map( 'absint', $wpdb->get_col( $wpdb->prepare( $query, $params ) ) );
+        return array_map( 'absint', $wpdb->get_col( $wpdb->prepare( $query, $params ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     } // End get_scan_queue()
 
 

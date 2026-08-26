@@ -174,7 +174,7 @@ class Menu {
      * @return string
      */
     public static function get_current_page_slug() : string {
-        return isset( $_GET[ 'page' ] ) ? sanitize_key( wp_unslash( $_GET[ 'page' ] ) ) : self::MENU_SLUG;
+        return isset( $_GET[ 'page' ] ) ? sanitize_key( wp_unslash( $_GET[ 'page' ] ) ) : self::MENU_SLUG; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
     } // End get_current_page_slug()
 
 

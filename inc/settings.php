@@ -296,8 +296,8 @@ class Settings {
                             <?php
                             wp_dropdown_pages( [
                                 'name'              => 'sqc_contact_page_id',
-                                'selected'          => $contact_page_id,
-                                'show_option_none'  => __( '— Select a page —', 'site-quality-check' ),
+                                'selected'          => esc_attr( $contact_page_id ),
+                                'show_option_none'  => esc_html__( '— Select a page —', 'site-quality-check' ),
                                 'option_none_value' => 0,
                             ] );
                             ?>
@@ -417,7 +417,7 @@ class Settings {
             wp_send_json_error( __( 'Insufficient permissions.', 'site-quality-check' ) );
         }
 
-        $settings = wp_unslash( $_POST[ 'settings' ] ?? [] );
+        $settings = wp_unslash( $_POST[ 'settings' ] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every value is sanitized individually below.
 
         if ( ! is_array( $settings ) ) {
             wp_send_json_error( __( 'Invalid data.', 'site-quality-check' ) );

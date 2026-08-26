@@ -139,7 +139,6 @@ class Helpers {
             'open-folder', 'pdf', 'pets', 'privacy', 'superhero', 'superhero-alt', 'edit-page', 'fullscreen-alt', 'fullscreen-exit-alt'
         ];
 
-        $dashicons = apply_filters( 'helpdocs_dashicons', $dashicons );
         $dashicons = apply_filters( 'sqc_dashicons', $dashicons );
         sort( $dashicons );
         return $dashicons;
