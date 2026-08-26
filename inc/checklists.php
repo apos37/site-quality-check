@@ -16,7 +16,7 @@ class Checklists {
     /**
      * CPT slug.
      */
-    public const POST_TYPE = 'sqc_checklist';
+    public const POST_TYPE = 'sqcheck_checklist';
 
 
     /**
@@ -58,13 +58,13 @@ class Checklists {
      */
     private function __construct() {
         add_action( 'init', [ $this, 'register_post_type' ] );
-        add_action( 'sqc_recurrence_check', [ $this, 'run_recurrence_check' ] );
-        add_action( 'sqc_subheader_left', [ $this, 'render_subheader_button' ] );
-        add_action( 'sqc_subheader_right', [ $this, 'render_subheader_search' ] );
-        add_action( 'wp_ajax_sqc_preload_defaults', [ $this, 'ajax_preload_defaults' ] );
+        add_action( 'sqcheck_recurrence_check', [ $this, 'run_recurrence_check' ] );
+        add_action( 'sqcheck_subheader_left', [ $this, 'render_subheader_button' ] );
+        add_action( 'sqcheck_subheader_right', [ $this, 'render_subheader_search' ] );
+        add_action( 'wp_ajax_sqcheck_preload_defaults', [ $this, 'ajax_preload_defaults' ] );
 
-        if ( ! wp_next_scheduled( 'sqc_recurrence_check' ) ) {
-            wp_schedule_event( time(), 'hourly', 'sqc_recurrence_check' );
+        if ( ! wp_next_scheduled( 'sqcheck_recurrence_check' ) ) {
+            wp_schedule_event( time(), 'hourly', 'sqcheck_recurrence_check' );
         }
     } // End __construct()
 
@@ -103,15 +103,15 @@ class Checklists {
             return;
         }
         ?>
-        <span class="sqc-add-checklist-row" id="sqc-add-checklist-row" style="display:none;">
-            <input type="text" class="sqc-add-checklist-input" placeholder="<?php esc_attr_e( 'New checklist name…', 'site-quality-check' ); ?>">
-            <button type="button" class="sqc-button" id="sqc-add-checklist-confirm"><?php esc_html_e( 'Add', 'site-quality-check' ); ?></button>
-            <button type="button" class="sqc-button button-secondary" id="sqc-add-checklist-cancel"><?php esc_html_e( 'Cancel', 'site-quality-check' ); ?></button>
+        <span class="sqcheck-add-checklist-row" id="sqcheck-add-checklist-row" style="display:none;">
+            <input type="text" class="sqcheck-add-checklist-input" placeholder="<?php esc_attr_e( 'New checklist name…', 'site-quality-check' ); ?>">
+            <button type="button" class="sqcheck-button" id="sqcheck-add-checklist-confirm"><?php esc_html_e( 'Add', 'site-quality-check' ); ?></button>
+            <button type="button" class="sqcheck-button button-secondary" id="sqcheck-add-checklist-cancel"><?php esc_html_e( 'Cancel', 'site-quality-check' ); ?></button>
         </span>
-        <button type="button" class="sqc-button" id="sqc-add-checklist">+ <?php esc_html_e( 'Add New Checklist', 'site-quality-check' ); ?></button>
+        <button type="button" class="sqcheck-button" id="sqcheck-add-checklist">+ <?php esc_html_e( 'Add New Checklist', 'site-quality-check' ); ?></button>
 
         <?php if ( empty( self::get_all() ) ) : ?>
-            <button type="button" class="sqc-button button-secondary" id="sqc-preload-defaults"><?php esc_html_e( 'Preload Default Checklists', 'site-quality-check' ); ?></button>
+            <button type="button" class="sqcheck-button button-secondary" id="sqcheck-preload-defaults"><?php esc_html_e( 'Preload Default Checklists', 'site-quality-check' ); ?></button>
         <?php endif; ?>
         <?php
     } // End render_subheader_button()
@@ -132,7 +132,7 @@ class Checklists {
             return;
         }
         ?>
-        <input type="search" id="sqc-checklist-search" placeholder="<?php esc_attr_e( 'Search checklists...', 'site-quality-check' ); ?>" class="sqc-search-input">
+        <input type="search" id="sqcheck-checklist-search" placeholder="<?php esc_attr_e( 'Search checklists...', 'site-quality-check' ); ?>" class="sqcheck-search-input">
         <?php
     } // End render_subheader_search()
 
@@ -153,14 +153,14 @@ class Checklists {
             'map_meta_cap'    => true,
         ] );
 
-        register_post_meta( self::POST_TYPE, 'sqc_sections', [
+        register_post_meta( self::POST_TYPE, 'sqcheck_sections', [
             'show_in_rest'      => false,
             'single'            => true,
             'type'              => 'string',
             'sanitize_callback' => 'wp_kses_post',
         ] );
 
-        register_post_meta( self::POST_TYPE, 'sqc_last_modified_by', [
+        register_post_meta( self::POST_TYPE, 'sqcheck_last_modified_by', [
             'show_in_rest'      => false,
             'single'            => true,
             'type'              => 'integer',
@@ -192,7 +192,7 @@ class Checklists {
      * @return array
      */
     public static function get_sections( int $checklist_id ) : array {
-        $raw = get_post_meta( $checklist_id, 'sqc_sections', true );
+        $raw = get_post_meta( $checklist_id, 'sqcheck_sections', true );
 
         if ( empty( $raw ) ) {
             return [];
@@ -214,7 +214,7 @@ class Checklists {
     public static function save_sections( int $checklist_id, array $sections ) : bool {
         $encoded = wp_json_encode( $sections );
 
-        return (bool) update_post_meta( $checklist_id, 'sqc_sections', $encoded );
+        return (bool) update_post_meta( $checklist_id, 'sqcheck_sections', $encoded );
     } // End save_sections()
 
 
@@ -397,21 +397,21 @@ class Checklists {
         $checklists = self::get_all();
 
         wp_enqueue_style(
-            'sqc-checklists',
+            'sqcheck-checklists',
             Bootstrap::url() . 'inc/css/checklists.css',
-            [ 'sqc-theme' ],
+            [ 'sqcheck-theme' ],
             Bootstrap::script_version()
         );
 
         wp_enqueue_script(
-            'sqc-checklists',
+            'sqcheck-checklists',
             Bootstrap::url() . 'inc/js/checklists.js',
             [ 'jquery' ],
             Bootstrap::script_version(),
             true
         );
 
-        wp_localize_script( 'sqc-checklists', 'sqcChecklists', [
+        wp_localize_script( 'sqcheck-checklists', 'sqcheckChecklists', [
             'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
             'nonce'     => wp_create_nonce( ChecklistsAjax::NONCE_ACTION ),
             'i18n' => [
@@ -428,38 +428,38 @@ class Checklists {
 
         if ( empty( $checklists ) ) {
             ?>
-            <div class="wrap sqc-content-wrap sqc-checklists">
+            <div class="wrap sqcheck-content-wrap sqcheck-checklists">
                 <p><?php esc_html_e( 'No checklists yet. Use "+ Add New Checklist" above to create one.', 'site-quality-check' ); ?></p>
             </div>
             <?php
             return;
         }
 
-        $active_id = isset( $_GET[ 'checklist' ] ) ? (int) $_GET[ 'checklist' ] : (int) get_user_meta( get_current_user_id(), 'sqc_last_checklist', true ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab selector, no state change.
+        $active_id = isset( $_GET[ 'checklist' ] ) ? (int) $_GET[ 'checklist' ] : (int) get_user_meta( get_current_user_id(), 'sqcheck_last_checklist', true ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab selector, no state change.
         $active_ids = wp_list_pluck( $checklists, 'ID' );
 
         if ( ! in_array( $active_id, $active_ids, true ) ) {
             $active_id = $checklists[ 0 ]->ID;
         }
 
-        update_user_meta( get_current_user_id(), 'sqc_last_checklist', $active_id );
+        update_user_meta( get_current_user_id(), 'sqcheck_last_checklist', $active_id );
         ?>
-        <div class="wrap sqc-content-wrap sqc-checklists" id="sqc-checklists-app">
-            <div id="sqc-checklist-layout">
+        <div class="wrap sqcheck-content-wrap sqcheck-checklists" id="sqcheck-checklists-app">
+            <div id="sqcheck-checklist-layout">
 
-                <div id="sqc-checklist-sidebar" class="sqc-box">
-                    <ul id="sqc-checklist-list">
+                <div id="sqcheck-checklist-sidebar" class="sqcheck-box">
+                    <ul id="sqcheck-checklist-list">
                         <?php foreach ( $checklists as $checklist ) : ?>
                             <?php
                             $stats = self::get_completion_stats( $checklist->ID );
                             $is_active = ( $checklist->ID === $active_id );
-                            $item_class = $is_active ? 'sqc-sidebar-item active' : 'sqc-sidebar-item';
+                            $item_class = $is_active ? 'sqcheck-sidebar-item active' : 'sqcheck-sidebar-item';
                             ?>
                             <li class="<?php echo esc_attr( $item_class ); ?>" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>" draggable="true">
                                 <a href="<?php echo esc_url( add_query_arg( [ 'page' => Menu::MENU_SLUG . '-checklists', 'checklist' => $checklist->ID ], admin_url( 'admin.php' ) ) ); ?>" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>">
-                                    <span class="sqc-sidebar-item-title"><?php echo esc_html( $checklist->post_title ); ?></span>
+                                    <span class="sqcheck-sidebar-item-title"><?php echo esc_html( $checklist->post_title ); ?></span>
                                     <?php if ( null !== $stats[ 'percent' ] ) : ?>
-                                        <span class="sqc-sidebar-item-percent"><?php echo esc_html( $stats[ 'percent' ] ); ?>%</span>
+                                        <span class="sqcheck-sidebar-item-percent"><?php echo esc_html( $stats[ 'percent' ] ); ?>%</span>
                                     <?php endif; ?>
                                 </a>
                             </li>
@@ -467,7 +467,7 @@ class Checklists {
                     </ul>
                 </div>
 
-                <div id="sqc-checklist-viewer" class="sqc-box">
+                <div id="sqcheck-checklist-viewer" class="sqcheck-box">
                     <?php foreach ( $checklists as $checklist ) : ?>
                         <?php self::render_checklist_panel( $checklist, $checklist->ID === $active_id ); ?>
                     <?php endforeach; ?>
@@ -490,18 +490,18 @@ class Checklists {
         $sections = self::get_sections( $checklist->ID );
 
         $created_by = get_userdata( $checklist->post_author );
-        $modified_by_id = (int) get_post_meta( $checklist->ID, 'sqc_last_modified_by', true );
+        $modified_by_id = (int) get_post_meta( $checklist->ID, 'sqcheck_last_modified_by', true );
         $modified_by = $modified_by_id ? get_userdata( $modified_by_id ) : null;
         ?>
-        <div class="sqc-checklist-panel" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>" <?php echo $is_active ? '' : 'style="display:none;"'; ?>>
-            <div class="sqc-checklist-header">
-                <h2 class="sqc-checklist-title"><?php echo esc_html( $checklist->post_title ); ?></h2>
-                <div class="sqc-checklist-tools">
-                    <button type="button" class="sqc-button button-secondary sqc-edit-checklist-toggle" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>"><?php esc_html_e( 'Edit', 'site-quality-check' ); ?></button>
+        <div class="sqcheck-checklist-panel" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>" <?php echo $is_active ? '' : 'style="display:none;"'; ?>>
+            <div class="sqcheck-checklist-header">
+                <h2 class="sqcheck-checklist-title"><?php echo esc_html( $checklist->post_title ); ?></h2>
+                <div class="sqcheck-checklist-tools">
+                    <button type="button" class="sqcheck-button button-secondary sqcheck-edit-checklist-toggle" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>"><?php esc_html_e( 'Edit', 'site-quality-check' ); ?></button>
                 </div>
             </div>
 
-            <p class="sqc-checklist-meta">
+            <p class="sqcheck-checklist-meta">
                 <?php echo esc_html( sprintf(
                     /* translators: 1: date, 2: user display name */
                     __( 'Created %1$s by %2$s', 'site-quality-check' ),
@@ -520,26 +520,26 @@ class Checklists {
                 <?php endif; ?>
             </p>
 
-            <div class="sqc-sections" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>">
+            <div class="sqcheck-sections" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>">
                 <?php foreach ( $sections as $section ) : ?>
                     <?php self::render_section( $checklist->ID, $section ); ?>
                 <?php endforeach; ?>
             </div>
 
-            <div class="sqc-add-section-row" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>" style="display:none;">
-                <input type="text" class="sqc-add-section-input" placeholder="<?php esc_attr_e( 'New section name…', 'site-quality-check' ); ?>">
-                <select class="sqc-add-section-recurrence">
+            <div class="sqcheck-add-section-row" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>" style="display:none;">
+                <input type="text" class="sqcheck-add-section-input" placeholder="<?php esc_attr_e( 'New section name…', 'site-quality-check' ); ?>">
+                <select class="sqcheck-add-section-recurrence">
                     <?php foreach ( Checklists::RECURRENCE_INTERVALS as $key => $seconds ) : ?>
                         <option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( Helpers::recurrence_label( $key ) ); ?></option>
                     <?php endforeach; ?>
                 </select>
-                <button type="button" class="sqc-button sqc-add-section-confirm" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>"><?php esc_html_e( 'Add', 'site-quality-check' ); ?></button>
-                <button type="button" class="sqc-button button-secondary sqc-add-section-cancel"><?php esc_html_e( 'Cancel', 'site-quality-check' ); ?></button>
+                <button type="button" class="sqcheck-button sqcheck-add-section-confirm" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>"><?php esc_html_e( 'Add', 'site-quality-check' ); ?></button>
+                <button type="button" class="sqcheck-button button-secondary sqcheck-add-section-cancel"><?php esc_html_e( 'Cancel', 'site-quality-check' ); ?></button>
             </div>
-            <button type="button" class="sqc-button button-secondary sqc-show-add-section" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>" style="display:none;">+ <?php esc_html_e( 'Add Section', 'site-quality-check' ); ?></button>
+            <button type="button" class="sqcheck-button button-secondary sqcheck-show-add-section" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>" style="display:none;">+ <?php esc_html_e( 'Add Section', 'site-quality-check' ); ?></button>
 
-            <div class="sqc-checklist-danger-zone" style="display:none;">
-                <button type="button" class="sqc-button sqc-button-danger sqc-delete-checklist" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>"><?php esc_html_e( 'Delete This Checklist', 'site-quality-check' ); ?></button>
+            <div class="sqcheck-checklist-danger-zone" style="display:none;">
+                <button type="button" class="sqcheck-button sqcheck-button-danger sqcheck-delete-checklist" data-checklist-id="<?php echo esc_attr( $checklist->ID ); ?>"><?php esc_html_e( 'Delete This Checklist', 'site-quality-check' ); ?></button>
             </div>
         </div>
         <?php
@@ -556,38 +556,38 @@ class Checklists {
     private static function render_section( int $checklist_id, array $section ) : void {
         $recurrence_order = array_search( $section[ 'recurrence' ], array_keys( self::RECURRENCE_INTERVALS ), true );
         ?>
-        <div class="sqc-section" data-section-id="<?php echo esc_attr( $section[ 'id' ] ); ?>" data-recurrence-order="<?php echo esc_attr( $recurrence_order ); ?>">
-            <div class="sqc-section-header-row">
-                <span class="sqc-section-drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'site-quality-check' ); ?>" style="display:none;">⠿</span>
-                <h3 class="sqc-section-label sqc-section-header"><?php echo esc_html( $section[ 'label' ] ); ?> <span class="sqc-section-recurrence">(<?php echo esc_html( Helpers::recurrence_label( $section[ 'recurrence' ] ) ); ?>)</span></h3>
-                <span class="sqc-section-edit-controls" style="display:none;">
-                    <button type="button" class="button-link sqc-show-edit-section" title="<?php esc_attr_e( 'Rename section', 'site-quality-check' ); ?>">✎</button>
-                    <button type="button" class="button-link sqc-delete-section" title="<?php esc_attr_e( 'Delete section', 'site-quality-check' ); ?>">✕</button>
+        <div class="sqcheck-section" data-section-id="<?php echo esc_attr( $section[ 'id' ] ); ?>" data-recurrence-order="<?php echo esc_attr( $recurrence_order ); ?>">
+            <div class="sqcheck-section-header-row">
+                <span class="sqcheck-section-drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'site-quality-check' ); ?>" style="display:none;">⠿</span>
+                <h3 class="sqcheck-section-label sqcheck-section-header"><?php echo esc_html( $section[ 'label' ] ); ?> <span class="sqcheck-section-recurrence">(<?php echo esc_html( Helpers::recurrence_label( $section[ 'recurrence' ] ) ); ?>)</span></h3>
+                <span class="sqcheck-section-edit-controls" style="display:none;">
+                    <button type="button" class="button-link sqcheck-show-edit-section" title="<?php esc_attr_e( 'Rename section', 'site-quality-check' ); ?>">✎</button>
+                    <button type="button" class="button-link sqcheck-delete-section" title="<?php esc_attr_e( 'Delete section', 'site-quality-check' ); ?>">✕</button>
                 </span>
             </div>
 
-            <div class="sqc-edit-section-row" style="display:none;">
-                <input type="text" class="sqc-edit-section-input" value="<?php echo esc_attr( $section[ 'label' ] ); ?>">
-                <select class="sqc-edit-section-recurrence">
+            <div class="sqcheck-edit-section-row" style="display:none;">
+                <input type="text" class="sqcheck-edit-section-input" value="<?php echo esc_attr( $section[ 'label' ] ); ?>">
+                <select class="sqcheck-edit-section-recurrence">
                     <?php foreach ( self::RECURRENCE_INTERVALS as $key => $seconds ) : ?>
                         <option value="<?php echo esc_attr( $key ); ?>" <?php selected( $section[ 'recurrence' ], $key ); ?>><?php echo esc_html( Helpers::recurrence_label( $key ) ); ?></option>
                     <?php endforeach; ?>
                 </select>
-                <button type="button" class="sqc-button sqc-edit-section-confirm"><?php esc_html_e( 'Save', 'site-quality-check' ); ?></button>
+                <button type="button" class="sqcheck-button sqcheck-edit-section-confirm"><?php esc_html_e( 'Save', 'site-quality-check' ); ?></button>
             </div>
 
-            <ul class="sqc-items" data-section-id="<?php echo esc_attr( $section[ 'id' ] ); ?>">
+            <ul class="sqcheck-items" data-section-id="<?php echo esc_attr( $section[ 'id' ] ); ?>">
                 <?php foreach ( $section[ 'items' ] ?? [] as $item ) : ?>
                     <?php self::render_item( $checklist_id, $item ); ?>
                 <?php endforeach; ?>
             </ul>
 
-            <div class="sqc-add-item-row" data-checklist-id="<?php echo esc_attr( $checklist_id ); ?>" data-section-id="<?php echo esc_attr( $section[ 'id' ] ); ?>" style="display:none;">
-                <input type="text" class="sqc-add-item-input" placeholder="<?php esc_attr_e( 'New item…', 'site-quality-check' ); ?>">
-                <button type="button" class="sqc-button sqc-add-item-confirm"><?php esc_html_e( 'Add', 'site-quality-check' ); ?></button>
-                <button type="button" class="sqc-button button-secondary sqc-add-item-cancel"><?php esc_html_e( 'Cancel', 'site-quality-check' ); ?></button>
+            <div class="sqcheck-add-item-row" data-checklist-id="<?php echo esc_attr( $checklist_id ); ?>" data-section-id="<?php echo esc_attr( $section[ 'id' ] ); ?>" style="display:none;">
+                <input type="text" class="sqcheck-add-item-input" placeholder="<?php esc_attr_e( 'New item…', 'site-quality-check' ); ?>">
+                <button type="button" class="sqcheck-button sqcheck-add-item-confirm"><?php esc_html_e( 'Add', 'site-quality-check' ); ?></button>
+                <button type="button" class="sqcheck-button button-secondary sqcheck-add-item-cancel"><?php esc_html_e( 'Cancel', 'site-quality-check' ); ?></button>
             </div>
-            <button type="button" class="sqc-button sqc-show-add-item" data-checklist-id="<?php echo esc_attr( $checklist_id ); ?>" data-section-id="<?php echo esc_attr( $section[ 'id' ] ); ?>" style="display:none;">+ <?php esc_html_e( 'Add Item', 'site-quality-check' ); ?></button>
+            <button type="button" class="sqcheck-button sqcheck-show-add-item" data-checklist-id="<?php echo esc_attr( $checklist_id ); ?>" data-section-id="<?php echo esc_attr( $section[ 'id' ] ); ?>" style="display:none;">+ <?php esc_html_e( 'Add Item', 'site-quality-check' ); ?></button>
         </div>
         <?php
     } // End render_section()
@@ -604,27 +604,27 @@ class Checklists {
         $status = $item[ 'status' ] ?? 'incomplete';
         $is_snoozed = 'snoozed' === $status;
         ?>
-        <li class="sqc-item sqc-item-<?php echo esc_attr( $status ); ?>" data-item-id="<?php echo esc_attr( $item[ 'id' ] ); ?>" data-checklist-id="<?php echo esc_attr( $checklist_id ); ?>" draggable="true">
-            <span class="sqc-drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'site-quality-check' ); ?>">::</span>
+        <li class="sqcheck-item sqcheck-item-<?php echo esc_attr( $status ); ?>" data-item-id="<?php echo esc_attr( $item[ 'id' ] ); ?>" data-checklist-id="<?php echo esc_attr( $checklist_id ); ?>" draggable="true">
+            <span class="sqcheck-drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'site-quality-check' ); ?>">::</span>
 
-            <input type="checkbox" class="sqc-item-toggle" <?php checked( 'complete', $status ); ?> <?php disabled( $is_snoozed ); ?>>
+            <input type="checkbox" class="sqcheck-item-toggle" <?php checked( 'complete', $status ); ?> <?php disabled( $is_snoozed ); ?>>
 
-            <span class="sqc-item-label"><?php echo esc_html( $item[ 'label' ] ); ?></span>
+            <span class="sqcheck-item-label"><?php echo esc_html( $item[ 'label' ] ); ?></span>
 
-            <span class="sqc-item-snoozed-badge" <?php echo $is_snoozed ? '' : 'style="display:none;"'; ?>>
+            <span class="sqcheck-item-snoozed-badge" <?php echo $is_snoozed ? '' : 'style="display:none;"'; ?>>
                 <?php 
                 /* translators: %s: date the item will reappear */
                 echo esc_html( sprintf( __( 'Snoozed until %s', 'site-quality-check' ), Helpers::format_date( $item[ 'snoozed_until' ] ?? null ) ) ); ?>
             </span>
 
-            <span class="sqc-item-actions-persistent">
-                <button type="button" class="button-link sqc-snooze-item" title="<?php esc_attr_e( 'Remind me later', 'site-quality-check' ); ?>" <?php echo $is_snoozed ? 'style="display:none;"' : ''; ?>>⏰</button>
-                <button type="button" class="button-link sqc-unsnooze-item" title="<?php esc_attr_e( 'Unsnooze', 'site-quality-check' ); ?>" <?php echo $is_snoozed ? '' : 'style="display:none;"'; ?>><?php esc_html_e( 'Unsnooze', 'site-quality-check' ); ?></button>
+            <span class="sqcheck-item-actions-persistent">
+                <button type="button" class="button-link sqcheck-snooze-item" title="<?php esc_attr_e( 'Remind me later', 'site-quality-check' ); ?>" <?php echo $is_snoozed ? 'style="display:none;"' : ''; ?>>⏰</button>
+                <button type="button" class="button-link sqcheck-unsnooze-item" title="<?php esc_attr_e( 'Unsnooze', 'site-quality-check' ); ?>" <?php echo $is_snoozed ? '' : 'style="display:none;"'; ?>><?php esc_html_e( 'Unsnooze', 'site-quality-check' ); ?></button>
             </span>
 
-            <span class="sqc-item-actions-edit" style="display:none;">
-                <button type="button" class="button-link sqc-edit-item-label" title="<?php esc_attr_e( 'Edit', 'site-quality-check' ); ?>">✎</button>
-                <button type="button" class="button-link sqc-delete-item" title="<?php esc_attr_e( 'Delete', 'site-quality-check' ); ?>">✕</button>
+            <span class="sqcheck-item-actions-edit" style="display:none;">
+                <button type="button" class="button-link sqcheck-edit-item-label" title="<?php esc_attr_e( 'Edit', 'site-quality-check' ); ?>">✎</button>
+                <button type="button" class="button-link sqcheck-delete-item" title="<?php esc_attr_e( 'Delete', 'site-quality-check' ); ?>">✕</button>
             </span>
         </li>
         <?php
@@ -638,7 +638,7 @@ class Checklists {
      * @return void
      */
     public static function touch( int $checklist_id ) : void {
-        update_post_meta( $checklist_id, 'sqc_last_modified_by', get_current_user_id() );
+        update_post_meta( $checklist_id, 'sqcheck_last_modified_by', get_current_user_id() );
         wp_update_post( [ 'ID' => $checklist_id ] ); // bumps post_modified automatically
     } // End touch()
 

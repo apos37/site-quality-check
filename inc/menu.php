@@ -62,9 +62,9 @@ class Menu {
             return;
         }
 
-        $menu_title = get_option( 'sqc_menu_title', __( 'Quality Check', 'site-quality-check' ) );
-        $page_title = get_option( 'sqc_page_title', __( 'Site Quality Check', 'site-quality-check' ) );
-        $menu_icon = get_option( 'sqc_menu_icon', 'yes-alt' );
+        $menu_title = get_option( 'sqcheck_menu_title', __( 'Quality Check', 'site-quality-check' ) );
+        $page_title = get_option( 'sqcheck_page_title', __( 'Site Quality Check', 'site-quality-check' ) );
+        $menu_icon = get_option( 'sqcheck_menu_icon', 'yes-alt' );
 
         add_menu_page(
             $page_title,
@@ -185,8 +185,8 @@ class Menu {
      * @return void
      */
     public static function render_header( string $active_page ) : void {
-        $page_title = get_option( 'sqc_page_title', __( 'Site Quality Check', 'site-quality-check' ) );
-        $logo = get_option( 'sqc_logo', '' );
+        $page_title = get_option( 'sqcheck_page_title', __( 'Site Quality Check', 'site-quality-check' ) );
+        $logo = get_option( 'sqcheck_logo', '' );
 
         if ( ! $logo ) {
             $logo = 'https://pluginrx.com/wp-content/plugins/admin-help-docs/inc/img/logo.png';
@@ -204,7 +204,7 @@ class Menu {
             $tabs[ self::MENU_SLUG . '-settings' ] = __( 'Settings', 'site-quality-check' );
         }
         ?>
-        <div id="sqc-header">
+        <div id="sqcheck-header">
             <img src="<?php echo esc_url( $logo ); ?>" alt="" class="logo">
 
             <div class="title-cont">
@@ -215,7 +215,7 @@ class Menu {
                 <?php foreach ( $tabs as $slug => $label ) : ?>
                     <?php
                     $url = admin_url( 'admin.php?page=' . $slug );
-                    $class = ( $active_page === $slug ) ? 'sqc-tab sqc-tab-active' : 'sqc-tab';
+                    $class = ( $active_page === $slug ) ? 'sqcheck-tab sqcheck-tab-active' : 'sqcheck-tab';
                     ?>
                     <a href="<?php echo esc_url( $url ); ?>" class="<?php echo esc_attr( $class ); ?>"><?php echo esc_html( $label ); ?></a>
                 <?php endforeach; ?>
@@ -227,7 +227,7 @@ class Menu {
 
     /**
      * Render the white subheader bar: page title on the left, action buttons on the right.
-     * Fires 'sqc_subheader_left' and 'sqc_subheader_right' so other code can add buttons.
+     * Fires 'sqcheck_subheader_left' and 'sqcheck_subheader_right' so other code can add buttons.
      *
      * @param string $title
      * @param string $active_page
@@ -235,13 +235,13 @@ class Menu {
      */
     public static function render_subheader( string $title, string $active_page ) : void {
         ?>
-        <div id="sqc-subheader">
+        <div id="sqcheck-subheader">
             <div class="subheader-left">
                 <h2 class="tab-title"><?php echo esc_html( $title ); ?></h2>
-                <?php do_action( 'sqc_subheader_left', $active_page ); ?>
+                <?php do_action( 'sqcheck_subheader_left', $active_page ); ?>
             </div>
             <div class="subheader-right">
-                <?php do_action( 'sqc_subheader_right', $active_page ); ?>
+                <?php do_action( 'sqcheck_subheader_right', $active_page ); ?>
             </div>
         </div>
         <?php
@@ -280,7 +280,7 @@ class Menu {
         }
 
         wp_enqueue_style(
-            'sqc-theme',
+            'sqcheck-theme',
             Bootstrap::url() . 'inc/css/theme.css',
             [],
             Bootstrap::script_version()
@@ -291,26 +291,26 @@ class Menu {
 
             if ( $ahd_colors ) {
                 $map = [
-                    'header_bg'       => '--sqc-color-header-bg',
-                    'header_font'     => '--sqc-color-header-font',
-                    'header_tab'      => '--sqc-color-header-tab',
-                    'header_tab_link' => '--sqc-color-header-tab-link',
-                    'doc_accent'      => '--sqc-color-accent',
-                    'button'          => '--sqc-color-button',
-                    'button_font'     => '--sqc-color-button-font',
-                    'button_hover'    => '--sqc-color-button-hover',
+                    'header_bg'       => '--sqcheck-color-header-bg',
+                    'header_font'     => '--sqcheck-color-header-font',
+                    'header_tab'      => '--sqcheck-color-header-tab',
+                    'header_tab_link' => '--sqcheck-color-header-tab-link',
+                    'doc_accent'      => '--sqcheck-color-accent',
+                    'button'          => '--sqcheck-color-button',
+                    'button_font'     => '--sqcheck-color-button-font',
+                    'button_hover'    => '--sqcheck-color-button-hover',
                 ];
 
                 $declarations = [];
 
-                foreach ( $map as $ahd_key => $sqc_var ) {
+                foreach ( $map as $ahd_key => $sqcheck_var ) {
                     if ( ! empty( $ahd_colors[ $ahd_key ] ) ) {
-                        $declarations[] = $sqc_var . ': ' . sanitize_hex_color( $ahd_colors[ $ahd_key ] ) . ';';
+                        $declarations[] = $sqcheck_var . ': ' . sanitize_hex_color( $ahd_colors[ $ahd_key ] ) . ';';
                     }
                 }
 
                 if ( $declarations ) {
-                    wp_add_inline_style( 'sqc-theme', ':root {' . implode( '', $declarations ) . '}' );
+                    wp_add_inline_style( 'sqcheck-theme', ':root {' . implode( '', $declarations ) . '}' );
                 }
             }
         }

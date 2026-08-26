@@ -119,9 +119,9 @@ class StaleContentListTable extends \WP_List_Table {
         ];
 
         if ( $this->showing_omitted ) {
-            $actions[ 'unomit' ] = '<a href="#" class="sqc-unomit-post" data-post-id="' . esc_attr( $post->ID ) . '">' . esc_html__( 'Un-omit', 'site-quality-check' ) . '</a>';
+            $actions[ 'unomit' ] = '<a href="#" class="sqcheck-unomit-post" data-post-id="' . esc_attr( $post->ID ) . '">' . esc_html__( 'Un-omit', 'site-quality-check' ) . '</a>';
         } else {
-            $actions[ 'omit' ] = '<a href="#" class="sqc-omit-post" data-post-id="' . esc_attr( $post->ID ) . '">' . esc_html__( 'Omit', 'site-quality-check' ) . '</a>';
+            $actions[ 'omit' ] = '<a href="#" class="sqcheck-omit-post" data-post-id="' . esc_attr( $post->ID ) . '">' . esc_html__( 'Omit', 'site-quality-check' ) . '</a>';
         }
 
         return $title . $this->row_actions( $actions );
@@ -157,7 +157,7 @@ class StaleContentListTable extends \WP_List_Table {
                 return $editor ? esc_html( $editor->display_name ) : esc_html__( 'Unknown', 'site-quality-check' );
 
             case 'status':
-                return '<span class="sqc-badge sqc-badge-' . esc_attr( $item[ 'tier' ] ) . '">' . esc_html( ucfirst( $item[ 'tier' ] ) ) . '</span>';
+                return '<span class="sqcheck-badge sqcheck-badge-' . esc_attr( $item[ 'tier' ] ) . '">' . esc_html( ucfirst( $item[ 'tier' ] ) ) . '</span>';
 
             default:
                 return '';
@@ -201,7 +201,7 @@ class StaleContentListTable extends \WP_List_Table {
      * @return void
      */
     public function prepare_items() : void {
-        $this->showing_omitted = isset( $_REQUEST[ 'sqc_view' ] ) && 'omitted' === $_REQUEST[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
+        $this->showing_omitted = isset( $_REQUEST[ 'sqcheck_view' ] ) && 'omitted' === $_REQUEST[ 'sqcheck_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
         $this->process_bulk_action();
 
@@ -214,8 +214,8 @@ class StaleContentListTable extends \WP_List_Table {
 
         $this->_column_headers = [ $columns, $hidden, $sortable ];
 
-        $orderby = sanitize_key( wp_unslash( $_REQUEST[ 'orderby' ] ?? 'last_modified' ) );
-        $order = ( 'asc' === strtolower( sanitize_text_field( wp_unslash( $_REQUEST[ 'order' ] ?? 'desc' ) ) ) ) ? 'asc' : 'desc';
+        $orderby = sanitize_key( wp_unslash( $_REQUEST[ 'orderby' ] ?? 'last_modified' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
+        $order = ( 'asc' === strtolower( sanitize_text_field( wp_unslash( $_REQUEST[ 'order' ] ?? 'desc' ) ) ) ) ? 'asc' : 'desc'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
         if ( $this->showing_omitted ) {
             $posts = StaleContent::get_omitted_posts();
@@ -226,7 +226,7 @@ class StaleContentListTable extends \WP_List_Table {
             $items = StaleContent::get_stale_content( 'desc' === $order );
         }
 
-        $search = sanitize_text_field( wp_unslash( $_REQUEST[ 's' ] ?? '' ) );
+        $search = sanitize_text_field( wp_unslash( $_REQUEST[ 's' ] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
         if ( '' !== $search ) {
             $items = array_values( array_filter( $items, function ( $item ) use ( $search ) {

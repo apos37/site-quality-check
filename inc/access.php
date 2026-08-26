@@ -59,7 +59,7 @@ class Access {
     /**
      * Check if the current user can access the plugin at all: Dashboard, Checklists,
      * Stale Content, Content Audits, Integrations. Administrators always have access;
-     * additional roles are granted via the sqc_allowed_roles setting.
+     * additional roles are granted via the sqcheck_allowed_roles setting.
      *
      * @param int|null $user_id Optional user ID, defaults to current user.
      * @return bool
@@ -75,7 +75,7 @@ class Access {
             return true;
         }
 
-        $allowed_roles = get_option( 'sqc_allowed_roles', [] );
+        $allowed_roles = get_option( 'sqcheck_allowed_roles', [] );
 
         if ( empty( $allowed_roles ) ) {
             return false;

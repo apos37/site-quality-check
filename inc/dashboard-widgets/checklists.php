@@ -9,7 +9,7 @@ namespace PluginRx\SiteQualityCheck;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-add_filter( 'sqc_dashboard_widgets', function ( array $widgets ) : array {
+add_filter( 'sqcheck_dashboard_widgets', function ( array $widgets ) : array {
     $widgets[ 'checklists' ] = [
         'title'    => __( 'Checklists', 'site-quality-check' ),
         'priority' => 10,
@@ -34,7 +34,7 @@ function render_checklists_widget() : void {
         return;
     }
 
-    echo '<ul class="sqc-plain-list">';
+    echo '<ul class="sqcheck-plain-list">';
 
     foreach ( $checklists as $checklist ) {
         $stats = Checklists::get_completion_stats( $checklist->ID );
@@ -42,10 +42,10 @@ function render_checklists_widget() : void {
         $label = null === $percent ? __( 'Nothing due', 'site-quality-check' ) : $percent . '%';
 
         echo '<li>';
-        echo '<span class="sqc-checklist-row-top"><span>' . esc_html( $checklist->post_title ) . '</span><span class="sqc-checklist-percent">' . esc_html( $label ) . '</span></span>';
+        echo '<span class="sqcheck-checklist-row-top"><span>' . esc_html( $checklist->post_title ) . '</span><span class="sqcheck-checklist-percent">' . esc_html( $label ) . '</span></span>';
 
         if ( null !== $percent ) {
-            echo '<span class="sqc-mini-progress-bar"><span class="sqc-mini-progress-bar-fill" style="width: ' . esc_attr( $percent ) . '%;"></span></span>';
+            echo '<span class="sqcheck-mini-progress-bar"><span class="sqcheck-mini-progress-bar-fill" style="width: ' . esc_attr( $percent ) . '%;"></span></span>';
         }
 
         echo '</li>';

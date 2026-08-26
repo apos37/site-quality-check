@@ -10,7 +10,7 @@ namespace PluginRx\SiteQualityCheck;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-add_filter( 'sqc_dashboard_widgets', function ( array $widgets ) : array {
+add_filter( 'sqcheck_dashboard_widgets', function ( array $widgets ) : array {
     $widgets[ 'site_health' ] = [
         'title'    => __( 'Site Health', 'site-quality-check' ),
         'priority' => 1,
@@ -40,14 +40,14 @@ function render_site_health_widget() : void {
     $total = $total_complete + $total_incomplete;
     $percent = $total > 0 ? (int) round( ( $total_complete / $total ) * 100 ) : null;
 
-    echo '<div class="sqc-site-health-score">';
+    echo '<div class="sqcheck-site-health-score">';
 
     if ( null === $percent ) {
         echo '<p>' . esc_html__( 'Nothing due right now.', 'site-quality-check' ) . '</p>';
     } else {
-        echo '<p class="sqc-score">' . esc_html( $percent ) . '%</p>';
+        echo '<p class="sqcheck-score">' . esc_html( $percent ) . '%</p>';
 
-        echo '<div class="sqc-progress-bar"><div class="sqc-progress-bar-fill" style="width: ' . esc_attr( $percent ) . '%;"></div></div>';
+        echo '<div class="sqcheck-progress-bar"><div class="sqcheck-progress-bar-fill" style="width: ' . esc_attr( $percent ) . '%;"></div></div>';
 
         echo '<p>' . esc_html( sprintf(
             /* translators: 1: completed items, 2: total items */

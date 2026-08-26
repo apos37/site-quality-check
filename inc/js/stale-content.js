@@ -8,16 +8,16 @@
     'use strict';
 
     $( document ).ready( function () {
-        $( document ).on( 'click', 'a.sqc-omit-post', function ( e ) {
+        $( document ).on( 'click', 'a.sqcheck-omit-post', function ( e ) {
             e.preventDefault();
 
             var link = $( this );
             var postId = link.data( 'post-id' );
             var row = link.closest( 'tr' );
 
-            $.post( sqcStaleContent.ajaxUrl, {
-                action: 'sqc_omit_stale_post',
-                nonce: sqcStaleContent.nonce,
+            $.post( sqcheckStaleContent.ajaxUrl, {
+                action: 'sqcheck_omit_stale_post',
+                nonce: sqcheckStaleContent.nonce,
                 post_id: postId
             } ).done( function ( response ) {
                 if ( ! response.success ) {
@@ -29,16 +29,16 @@
             } );
         } );
 
-        $( document ).on( 'click', 'a.sqc-unomit-post', function ( e ) {
+        $( document ).on( 'click', 'a.sqcheck-unomit-post', function ( e ) {
             e.preventDefault();
 
             var link = $( this );
             var postId = link.data( 'post-id' );
             var row = link.closest( 'tr' );
 
-            $.post( sqcStaleContent.ajaxUrl, {
-                action: 'sqc_unomit_stale_post',
-                nonce: sqcStaleContent.nonce,
+            $.post( sqcheckStaleContent.ajaxUrl, {
+                action: 'sqcheck_unomit_stale_post',
+                nonce: sqcheckStaleContent.nonce,
                 post_id: postId
             } ).done( function ( response ) {
                 if ( ! response.success ) {

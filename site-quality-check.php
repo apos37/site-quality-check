@@ -262,14 +262,14 @@ final class Bootstrap {
      * @return void
      */
     public function activate() : void {
-        if ( ! get_option( 'sqc_activated_time' ) ) {
-            update_option( 'sqc_activated_time', time() );
+        if ( ! get_option( 'sqcheck_activated_time' ) ) {
+            update_option( 'sqcheck_activated_time', time() );
         }
 
         self::create_tables();
 
         add_action( 'init', function () {
-            do_action( 'sqc_activated' );
+            do_action( 'sqcheck_activated' );
         }, 20 );
     } // End activate()
 
@@ -285,7 +285,7 @@ final class Bootstrap {
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
         $charset_collate = $wpdb->get_charset_collate();
-        $table = $wpdb->prefix . 'sqc_audit_results';
+        $table = $wpdb->prefix . 'sqcheck_audit_results';
 
         $sql = "CREATE TABLE {$table} (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

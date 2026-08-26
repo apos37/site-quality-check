@@ -3,7 +3,7 @@
  * DASHBOARD
  *
  * Registers the dashboard hook contract and renders registered widgets.
- * Third-party developers can hook into 'sqc_dashboard_widgets' to add their own.
+ * Third-party developers can hook into 'sqcheck_dashboard_widgets' to add their own.
  */
 
 namespace PluginRx\SiteQualityCheck;
@@ -51,9 +51,9 @@ class Dashboard {
         }
 
         wp_enqueue_style(
-            'sqc-dashboard',
+            'sqcheck-dashboard',
             Bootstrap::url() . 'inc/css/dashboard.css',
-            [ 'sqc-theme' ],
+            [ 'sqcheck-theme' ],
             Bootstrap::script_version()
         );
     } // End enqueue_assets()
@@ -67,17 +67,17 @@ class Dashboard {
     public static function render() : void {
         $widgets = self::get_widgets();
         ?>
-        <div class="wrap sqc-content-wrap sqc-dashboard">
-            <div class="sqc-dashboard-grid">
+        <div class="wrap sqcheck-content-wrap sqcheck-dashboard">
+            <div class="sqcheck-dashboard-grid">
                 <?php foreach ( $widgets as $slug => $widget ) : ?>
-                    <div class="sqc-widget sqc-widget-<?php echo esc_attr( $slug ); ?>">
-                        <div class="sqc-widget-header">
+                    <div class="sqcheck-widget sqcheck-widget-<?php echo esc_attr( $slug ); ?>">
+                        <div class="sqcheck-widget-header">
                             <h2><?php echo esc_html( $widget[ 'title' ] ); ?></h2>
                             <?php if ( ! empty( $widget[ 'url' ] ) ) : ?>
-                                <a href="<?php echo esc_url( $widget[ 'url' ] ); ?>" class="sqc-widget-goto" title="<?php esc_attr_e( 'View', 'site-quality-check' ); ?>"><span class="dashicons dashicons-external"></span></a>
+                                <a href="<?php echo esc_url( $widget[ 'url' ] ); ?>" class="sqcheck-widget-goto" title="<?php esc_attr_e( 'View', 'site-quality-check' ); ?>"><span class="dashicons dashicons-external"></span></a>
                             <?php endif; ?>
                         </div>
-                        <div class="sqc-widget-body">
+                        <div class="sqcheck-widget-body">
                             <?php call_user_func( $widget[ 'callback' ] ); ?>
                         </div>
                     </div>
@@ -103,7 +103,7 @@ class Dashboard {
      */
     public static function get_widgets() : array {
         /**
-         * Filter: sqc_dashboard_widgets
+         * Filter: sqcheck_dashboard_widgets
          *
          * Register a dashboard widget on the Site Quality Check dashboard.
          *
@@ -111,7 +111,7 @@ class Dashboard {
          *
          * Example:
          *
-         * add_filter( 'sqc_dashboard_widgets', function ( $widgets ) {
+         * add_filter( 'sqcheck_dashboard_widgets', function ( $widgets ) {
          *     $widgets[ 'my_widget' ] = [
          *         'title'    => __( 'My Widget', 'my-textdomain' ),
          *         'priority' => 15,
@@ -120,7 +120,7 @@ class Dashboard {
          *     return $widgets;
          * } );
          */
-        $widgets = apply_filters( 'sqc_dashboard_widgets', [] );
+        $widgets = apply_filters( 'sqcheck_dashboard_widgets', [] );
 
         $widgets = array_filter( $widgets, function ( $widget ) {
             return isset( $widget[ 'title' ], $widget[ 'callback' ] ) && is_callable( $widget[ 'callback' ] );

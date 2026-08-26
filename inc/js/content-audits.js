@@ -10,7 +10,7 @@
 
     $( document ).ready( function () {
 
-        $( document ).on( 'click', '#sqc-refresh-audit', function () {
+        $( document ).on( 'click', '#sqcheck-refresh-audit', function () {
             var button = $( this );
             var auditType = button.data( 'audit-type' );
             var icon = button.find( '.dashicons' );
@@ -20,31 +20,31 @@
             }
 
             icon.addClass( 'spin' );
-            $( '#sqc-audit-results-box' ).hide();
-            $( '#sqc-audit-scanning-status' ).show().text( sqcAudits.i18n.scanning + ' ...' );
+            $( '#sqcheck-audit-results-box' ).hide();
+            $( '#sqcheck-audit-scanning-status' ).show().text( sqcheckAudits.i18n.scanning + ' ...' );
 
             runScan( auditType, 0 );
         } );
 
         function runScan( auditType, offset ) {
-            $.post( sqcAudits.ajaxUrl, {
-                action: 'sqc_scan_chunk',
-                nonce: sqcAudits.nonce,
+            $.post( sqcheckAudits.ajaxUrl, {
+                action: 'sqcheck_scan_chunk',
+                nonce: sqcheckAudits.nonce,
                 audit_type: auditType,
                 offset: offset
             } ).done( function ( response ) {
                 if ( ! response.success ) {
                     window.alert( 'Scan failed.' );
-                    $( '#sqc-refresh-audit .dashicons' ).removeClass( 'spin' );
+                    $( '#sqcheck-refresh-audit .dashicons' ).removeClass( 'spin' );
                     return;
                 }
 
                 var data = response.data;
 
-                $( '#sqc-audit-scanning-status' ).text( sqcAudits.i18n.scanning + ' ' + data.last_title + ' (' + data.offset + '/' + data.total + ')' );
+                $( '#sqcheck-audit-scanning-status' ).text( sqcheckAudits.i18n.scanning + ' ' + data.last_title + ' (' + data.offset + '/' + data.total + ')' );
 
                 if ( data.done ) {
-                    $( '#sqc-refresh-audit .dashicons' ).removeClass( 'spin' );
+                    $( '#sqcheck-refresh-audit .dashicons' ).removeClass( 'spin' );
                     window.location.reload();
                 } else {
                     runScan( auditType, data.offset );
@@ -52,17 +52,17 @@
             } );
         } // End runScan()
 
-        $( document ).on( 'click', 'a.sqc-omit-result, a.sqc-unomit-result', function ( e ) {
+        $( document ).on( 'click', 'a.sqcheck-omit-result, a.sqcheck-unomit-result', function ( e ) {
             e.preventDefault();
 
             var link = $( this );
-            var isOmit = link.hasClass( 'sqc-omit-result' );
+            var isOmit = link.hasClass( 'sqcheck-omit-result' );
             var id = link.data( 'id' );
             var row = link.closest( 'tr' );
 
-            $.post( sqcAudits.ajaxUrl, {
-                action: isOmit ? 'sqc_omit_audit_result' : 'sqc_unomit_audit_result',
-                nonce: sqcAudits.nonce,
+            $.post( sqcheckAudits.ajaxUrl, {
+                action: isOmit ? 'sqcheck_omit_audit_result' : 'sqcheck_unomit_audit_result',
+                nonce: sqcheckAudits.nonce,
                 id: id
             } ).done( function ( response ) {
                 if ( ! response.success ) {
@@ -74,21 +74,21 @@
             } );
         } );
 
-        $( document ).on( 'click', '.sqc-alt-thumb-clickable', function () {
+        $( document ).on( 'click', '.sqcheck-alt-thumb-clickable', function () {
             var src = $( this ).data( 'full-src' );
 
-            $( '#sqc-modal-image' ).attr( 'src', src );
-            $( '#sqc-modal-link' ).attr( 'href', src ).text( src );
-            $( '#sqc-image-modal' ).css( 'display', 'flex' ).hide().fadeIn( 150 );
+            $( '#sqcheck-modal-image' ).attr( 'src', src );
+            $( '#sqcheck-modal-link' ).attr( 'href', src ).text( src );
+            $( '#sqcheck-image-modal' ).css( 'display', 'flex' ).hide().fadeIn( 150 );
         } );
 
-        $( document ).on( 'click', '.sqc-modal-close, .sqc-modal-overlay', function () {
-            $( '#sqc-image-modal' ).fadeOut( 150 );
+        $( document ).on( 'click', '.sqcheck-modal-close, .sqcheck-modal-overlay', function () {
+            $( '#sqcheck-image-modal' ).fadeOut( 150 );
         } );
 
         $( document ).on( 'keydown', function ( e ) {
             if ( 'Escape' === e.key ) {
-                $( '#sqc-image-modal' ).fadeOut( 150 );
+                $( '#sqcheck-image-modal' ).fadeOut( 150 );
             }
         } );
 

@@ -33,8 +33,8 @@ class ContentAudits {
      * Constructor
      */
     private function __construct() {
-        add_action( 'sqc_subheader_left', [ $this, 'render_subheader_tabs' ] );
-        add_action( 'sqc_subheader_right', [ $this, 'render_subheader_controls' ] );
+        add_action( 'sqcheck_subheader_left', [ $this, 'render_subheader_tabs' ] );
+        add_action( 'sqcheck_subheader_right', [ $this, 'render_subheader_controls' ] );
     } // End __construct()
 
 
@@ -82,12 +82,12 @@ class ContentAudits {
             $tab = sanitize_key( wp_unslash( $_GET[ 'audit' ] ) );
 
             if ( in_array( $tab, $tabs, true ) ) {
-                update_user_meta( get_current_user_id(), 'sqc_last_audit_tab', $tab );
+                update_user_meta( get_current_user_id(), 'sqcheck_last_audit_tab', $tab );
                 return $tab;
             }
         }
 
-        $last = get_user_meta( get_current_user_id(), 'sqc_last_audit_tab', true );
+        $last = get_user_meta( get_current_user_id(), 'sqcheck_last_audit_tab', true );
 
         return in_array( $last, $tabs, true ) ? $last : $tabs[ 0 ];
     } // End get_current_tab()
@@ -107,7 +107,7 @@ class ContentAudits {
         $current_tab = self::get_current_tab();
         ?>
         <?php foreach ( self::get_audit_tabs() as $slug => $label ) : ?>
-            <a href="<?php echo esc_url( add_query_arg( 'audit', $slug, remove_query_arg( 'sqc_view' ) ) ); ?>" class="sqc-button <?php echo $current_tab === $slug ? '' : 'button-secondary'; ?>"><?php echo esc_html( $label ); ?></a>
+            <a href="<?php echo esc_url( add_query_arg( 'audit', $slug, remove_query_arg( 'sqcheck_view' ) ) ); ?>" class="sqcheck-button <?php echo $current_tab === $slug ? '' : 'button-secondary'; ?>"><?php echo esc_html( $label ); ?></a>
         <?php endforeach; ?>
         <?php
     } // End render_subheader_tabs()
@@ -134,23 +134,23 @@ class ContentAudits {
             return;
         }
 
-        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
+        $showing_omitted = isset( $_GET[ 'sqcheck_view' ] ) && 'omitted' === $_GET[ 'sqcheck_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
         $omitted_count = count( Audits::get_results( $current_tab, true ) );
         ?>
-        <span id="sqc-audit-last-checked" data-audit-type="<?php echo esc_attr( $current_tab ); ?>">
+        <span id="sqcheck-audit-last-checked" data-audit-type="<?php echo esc_attr( $current_tab ); ?>">
             <?php 
             /* translators: %s: date the audit was last checked */
             echo esc_html( sprintf( __( 'Last checked: %s', 'site-quality-check' ), Audits::get_last_checked_display( $current_tab ) ) ); ?>
         </span>
 
-        <button type="button" class="sqc-button sqc-refresh-audit" id="sqc-refresh-audit" data-audit-type="<?php echo esc_attr( $current_tab ); ?>" title="<?php esc_attr_e( 'Rescan', 'site-quality-check' ); ?>">
+        <button type="button" class="sqcheck-button sqcheck-refresh-audit" id="sqcheck-refresh-audit" data-audit-type="<?php echo esc_attr( $current_tab ); ?>" title="<?php esc_attr_e( 'Rescan', 'site-quality-check' ); ?>">
             <span class="dashicons dashicons-update"></span>
         </button>
 
         <?php if ( $showing_omitted ) : ?>
-            <a href="<?php echo esc_url( remove_query_arg( 'sqc_view' ) ); ?>" class="sqc-button"><?php esc_html_e( 'Show Active', 'site-quality-check' ); ?></a>
+            <a href="<?php echo esc_url( remove_query_arg( 'sqcheck_view' ) ); ?>" class="sqcheck-button"><?php esc_html_e( 'Show Active', 'site-quality-check' ); ?></a>
         <?php else : ?>
-            <a href="<?php echo esc_url( add_query_arg( 'sqc_view', 'omitted' ) ); ?>" class="sqc-button"><?php echo esc_html( sprintf(
+            <a href="<?php echo esc_url( add_query_arg( 'sqcheck_view', 'omitted' ) ); ?>" class="sqcheck-button"><?php echo esc_html( sprintf(
                 /* translators: %d: number of omitted items */
                 __( 'Show Omitted (%d)', 'site-quality-check' ),
                 $omitted_count
@@ -176,7 +176,7 @@ class ContentAudits {
                     $src = $image[ 'src' ] ?? '';
                     $source_label = $labels[ $image[ 'source' ] ?? '' ] ?? '';
 
-                    $out[] = '<span class="sqc-alt-thumb-row"><img src="' . esc_url( $src ) . '" class="sqc-alt-thumb sqc-alt-thumb-clickable" data-full-src="' . esc_url( $src ) . '" alt=""><span class="sqc-alt-thumb-label">' . esc_html( $source_label ) . '</span></span>';
+                    $out[] = '<span class="sqcheck-alt-thumb-row"><img src="' . esc_url( $src ) . '" class="sqcheck-alt-thumb sqcheck-alt-thumb-clickable" data-full-src="' . esc_url( $src ) . '" alt=""><span class="sqcheck-alt-thumb-label">' . esc_html( $source_label ) . '</span></span>';
                 }
 
                 return implode( '', $out );
@@ -207,16 +207,16 @@ class ContentAudits {
         }
 
         wp_enqueue_script(
-            'sqc-content-audits',
+            'sqcheck-content-audits',
             Bootstrap::url() . 'inc/js/content-audits.js',
             [ 'jquery' ],
             Bootstrap::script_version(),
             true
         );
 
-        wp_localize_script( 'sqc-content-audits', 'sqcAudits', [
+        wp_localize_script( 'sqcheck-content-audits', 'sqcheckAudits', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-            'nonce'   => wp_create_nonce( 'sqc_audits_nonce' ),
+            'nonce'   => wp_create_nonce( 'sqcheck_audits_nonce' ),
             'i18n'    => [
                 'scanning' => __( 'Scanning:', 'site-quality-check' ),
                 'lastChecked' => __( 'Last checked:', 'site-quality-check' ),
@@ -224,13 +224,13 @@ class ContentAudits {
         ] );
 
         $current_tab = self::get_current_tab();
-        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
+        $showing_omitted = isset( $_GET[ 'sqcheck_view' ] ) && 'omitted' === $_GET[ 'sqcheck_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
         if ( 'seo_meta' === $current_tab && ! Integrations::is_yoast_active() ) {
             ?>
-            <div class="wrap sqc-content-wrap sqc-content-audits">
+            <div class="wrap sqcheck-content-wrap sqcheck-content-audits">
                 <p><?php echo esc_html( self::get_audit_description( $current_tab ) ); ?></p>
-                <div class="sqc-box"><div class="sqc-box-body">
+                <div class="sqcheck-box"><div class="sqcheck-box-body">
                     <p><?php esc_html_e( 'Yoast SEO is not active. Install it to see missing meta title and description reports.', 'site-quality-check' ); ?></p>
                 </div></div>
             </div>
@@ -240,9 +240,9 @@ class ContentAudits {
 
         if ( 'mixed_content' === $current_tab && 'https' !== wp_parse_url( home_url(), PHP_URL_SCHEME ) ) {
             ?>
-            <div class="wrap sqc-content-wrap sqc-content-audits">
+            <div class="wrap sqcheck-content-wrap sqcheck-content-audits">
                 <p><?php echo esc_html( self::get_audit_description( $current_tab ) ); ?></p>
-                <div class="sqc-audit-warning-banner">
+                <div class="sqcheck-audit-warning-banner">
                     <span class="dashicons dashicons-warning"></span>
                     <?php esc_html_e( 'Your site is not using HTTPS. Every WordPress site should be served over HTTPS — most hosts offer free SSL certificates. This check will run automatically once your site is switched to HTTPS.', 'site-quality-check' ); ?>
                 </div>
@@ -254,19 +254,19 @@ class ContentAudits {
         $table = new ContentAuditsListTable( $current_tab, self::get_details_renderer( $current_tab ) );
         $table->prepare_items();
         ?>
-        <div class="wrap sqc-content-wrap sqc-content-audits">
+        <div class="wrap sqcheck-content-wrap sqcheck-content-audits">
             <p><?php echo esc_html( self::get_audit_description( $current_tab ) ); ?></p>
 
             <?php if ( $showing_omitted ?? false ) : ?>
-                <div class="sqc-omitted-banner">
+                <div class="sqcheck-omitted-banner">
                     <span class="dashicons dashicons-hidden"></span>
                     <?php esc_html_e( 'Showing omitted items — these are excluded from the active audit above.', 'site-quality-check' ); ?>
                 </div>
             <?php endif; ?>
 
-            <div id="sqc-audit-scanning-status" style="display:none;"></div>
-            <div class="sqc-box" id="sqc-audit-results-box">
-                <div class="sqc-box-body">
+            <div id="sqcheck-audit-scanning-status" style="display:none;"></div>
+            <div class="sqcheck-box" id="sqcheck-audit-results-box">
+                <div class="sqcheck-box-body">
                     <?php if ( empty( $table->items ) ) : ?>
                         <p><?php esc_html_e( 'No results found.', 'site-quality-check' ); ?></p>
                     <?php else : ?>
@@ -279,12 +279,12 @@ class ContentAudits {
                 </div>
             </div>
 
-            <div id="sqc-image-modal" class="sqc-modal" style="display:none;">
-                <div class="sqc-modal-overlay"></div>
-                <div class="sqc-modal-content">
-                    <button type="button" class="sqc-modal-close" aria-label="<?php esc_attr_e( 'Close', 'site-quality-check' ); ?>">&times;</button>
-                    <img src="" alt="" id="sqc-modal-image">
-                    <p class="sqc-modal-url"><a href="" target="_blank" rel="noopener noreferrer" id="sqc-modal-link"></a></p>
+            <div id="sqcheck-image-modal" class="sqcheck-modal" style="display:none;">
+                <div class="sqcheck-modal-overlay"></div>
+                <div class="sqcheck-modal-content">
+                    <button type="button" class="sqcheck-modal-close" aria-label="<?php esc_attr_e( 'Close', 'site-quality-check' ); ?>">&times;</button>
+                    <img src="" alt="" id="sqcheck-modal-image">
+                    <p class="sqcheck-modal-url"><a href="" target="_blank" rel="noopener noreferrer" id="sqcheck-modal-link"></a></p>
                 </div>
             </div>
         </div>

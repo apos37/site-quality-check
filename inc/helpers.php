@@ -139,7 +139,7 @@ class Helpers {
             'open-folder', 'pdf', 'pets', 'privacy', 'superhero', 'superhero-alt', 'edit-page', 'fullscreen-alt', 'fullscreen-exit-alt'
         ];
 
-        $dashicons = apply_filters( 'sqc_dashicons', $dashicons );
+        $dashicons = apply_filters( 'sqcheck_dashicons', $dashicons );
         sort( $dashicons );
         return $dashicons;
     } // End get_dashicons()
@@ -156,9 +156,9 @@ class Helpers {
             return;
         }
         ?>
-        <span class="sqc-tooltip">
+        <span class="sqcheck-tooltip">
             <span class="dashicons dashicons-editor-help"></span>
-            <span class="sqc-tooltip-text"><?php echo wp_kses_post( $text ); ?></span>
+            <span class="sqcheck-tooltip-text"><?php echo wp_kses_post( $text ); ?></span>
         </span>
         <?php
     } // End tooltip()

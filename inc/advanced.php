@@ -41,8 +41,8 @@ class Advanced {
      * Constructor
      */
     private function __construct() {
-        add_action( 'admin_post_sqc_export', [ $this, 'handle_export' ] );
-        add_action( 'admin_post_sqc_reset_settings', [ $this, 'handle_reset_settings' ] );
+        add_action( 'admin_post_sqcheck_export', [ $this, 'handle_export' ] );
+        add_action( 'admin_post_sqcheck_reset_settings', [ $this, 'handle_reset_settings' ] );
     } // End __construct()
 
 
@@ -68,17 +68,17 @@ class Advanced {
             'exported_at'    => gmdate( 'c' ),
             'plugin_version' => Bootstrap::version(),
             'settings'       => [
-                'menu_title'              => get_option( 'sqc_menu_title', '' ),
-                'page_title'              => get_option( 'sqc_page_title', '' ),
-                'menu_icon'               => get_option( 'sqc_menu_icon', '' ),
-                'logo'                    => get_option( 'sqc_logo', '' ),
-                'allowed_roles'           => get_option( 'sqc_allowed_roles', [] ),
-                'stale_thresholds'        => get_option( 'sqc_stale_thresholds', StaleContent::DEFAULT_THRESHOLDS ),
-                'stale_post_types'        => get_option( 'sqc_stale_post_types', [ 'post', 'page' ] ),
-                'contact_page_id'         => get_option( 'sqc_contact_page_id', 0 ),
-                'contact_form_id'         => get_option( 'sqc_contact_form_id', 0 ),
-                'enabled_quick_actions'   => get_option( 'sqc_enabled_quick_actions', [] ),
-                'clear_data_on_uninstall' => get_option( 'sqc_clear_data_on_uninstall', false ),
+                'menu_title'              => get_option( 'sqcheck_menu_title', '' ),
+                'page_title'              => get_option( 'sqcheck_page_title', '' ),
+                'menu_icon'               => get_option( 'sqcheck_menu_icon', '' ),
+                'logo'                    => get_option( 'sqcheck_logo', '' ),
+                'allowed_roles'           => get_option( 'sqcheck_allowed_roles', [] ),
+                'stale_thresholds'        => get_option( 'sqcheck_stale_thresholds', StaleContent::DEFAULT_THRESHOLDS ),
+                'stale_post_types'        => get_option( 'sqcheck_stale_post_types', [ 'post', 'page' ] ),
+                'contact_page_id'         => get_option( 'sqcheck_contact_page_id', 0 ),
+                'contact_form_id'         => get_option( 'sqcheck_contact_form_id', 0 ),
+                'enabled_quick_actions'   => get_option( 'sqcheck_enabled_quick_actions', [] ),
+                'clear_data_on_uninstall' => get_option( 'sqcheck_clear_data_on_uninstall', false ),
             ],
             'checklists' => $checklists,
         ];
@@ -91,7 +91,7 @@ class Advanced {
      * @return void
      */
     public function handle_export() : void {
-        check_admin_referer( 'sqc_advanced_action' );
+        check_admin_referer( 'sqcheck_advanced_action' );
 
         if ( ! Access::can_manage() ) {
             wp_die( esc_html__( 'You do not have permission to do this.', 'site-quality-check' ) );
@@ -115,25 +115,25 @@ class Advanced {
      * @return void
      */
     public function handle_reset_settings() : void {
-        check_admin_referer( 'sqc_advanced_action' );
+        check_admin_referer( 'sqcheck_advanced_action' );
 
         if ( ! Access::can_manage() ) {
             wp_die( esc_html__( 'You do not have permission to do this.', 'site-quality-check' ) );
         }
 
-        delete_option( 'sqc_menu_title' );
-        delete_option( 'sqc_page_title' );
-        delete_option( 'sqc_menu_icon' );
-        delete_option( 'sqc_logo' );
-        delete_option( 'sqc_allowed_roles' );
-        delete_option( 'sqc_stale_thresholds' );
-        delete_option( 'sqc_stale_post_types' );
-        delete_option( 'sqc_contact_page_id' );
-        delete_option( 'sqc_contact_form_id' );
-        delete_option( 'sqc_enabled_quick_actions' );
-        delete_option( 'sqc_clear_data_on_uninstall' );
+        delete_option( 'sqcheck_menu_title' );
+        delete_option( 'sqcheck_page_title' );
+        delete_option( 'sqcheck_menu_icon' );
+        delete_option( 'sqcheck_logo' );
+        delete_option( 'sqcheck_allowed_roles' );
+        delete_option( 'sqcheck_stale_thresholds' );
+        delete_option( 'sqcheck_stale_post_types' );
+        delete_option( 'sqcheck_contact_page_id' );
+        delete_option( 'sqcheck_contact_form_id' );
+        delete_option( 'sqcheck_enabled_quick_actions' );
+        delete_option( 'sqcheck_clear_data_on_uninstall' );
 
-        $redirect = add_query_arg( 'sqc_reset', 'success', admin_url( 'admin.php?page=' . Menu::MENU_SLUG . '-settings' ) );
+        $redirect = add_query_arg( 'sqcheck_reset', 'success', admin_url( 'admin.php?page=' . Menu::MENU_SLUG . '-settings' ) );
 
         wp_safe_redirect( $redirect );
         exit;
@@ -147,13 +147,13 @@ class Advanced {
      */
     public static function render_notices() : void {
         $messages = [
-            'sqc_import' => [
+            'sqcheck_import' => [
                 'success'       => [ 'success', __( 'Import completed successfully.', 'site-quality-check' ) ],
                 'invalid'       => [ 'error', __( 'The uploaded file is not a valid export.', 'site-quality-check' ) ],
                 'no_file'       => [ 'error', __( 'No file was uploaded.', 'site-quality-check' ) ],
                 'newer_version' => [ 'error', __( 'This export was created by a newer version of the plugin and cannot be imported.', 'site-quality-check' ) ],
             ],
-            'sqc_reset' => [
+            'sqcheck_reset' => [
                 'success' => [ 'success', __( 'Settings reset to defaults.', 'site-quality-check' ) ],
             ],
         ];
@@ -163,7 +163,7 @@ class Advanced {
                 continue;
             }
 
-            $key = sanitize_text_field( wp_unslash( $_GET[ $param ] ) );
+            $key = sanitize_text_field( wp_unslash( $_GET[ $param ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
             if ( ! isset( $options[ $key ] ) ) {
                 continue;

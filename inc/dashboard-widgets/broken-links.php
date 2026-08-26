@@ -10,7 +10,7 @@ namespace PluginRx\SiteQualityCheck;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-add_filter( 'sqc_dashboard_widgets', function ( array $widgets ) : array {
+add_filter( 'sqcheck_dashboard_widgets', function ( array $widgets ) : array {
     if ( ! Integrations::is_broken_link_notifier_active() ) {
         return $widgets;
     }
@@ -34,6 +34,6 @@ add_filter( 'sqc_dashboard_widgets', function ( array $widgets ) : array {
 function render_broken_links_widget() : void {
     $count = Integrations::get_broken_link_count();
 
-    echo '<p class="sqc-score">' . esc_html( $count ) . '</p>';
+    echo '<p class="sqcheck-score">' . esc_html( $count ) . '</p>';
     echo '<p>' . esc_html__( 'broken links found', 'site-quality-check' ) . '</p>';
 } // End render_broken_links_widget()

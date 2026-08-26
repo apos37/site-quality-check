@@ -16,7 +16,7 @@ class ChecklistsAjax {
     /**
      * Nonce action for all checklist AJAX requests.
      */
-    public const NONCE_ACTION = 'sqc_checklists_nonce';
+    public const NONCE_ACTION = 'sqcheck_checklists_nonce';
 
 
     /**
@@ -39,19 +39,19 @@ class ChecklistsAjax {
      * Constructor
      */
     private function __construct() {
-        add_action( 'wp_ajax_sqc_set_item_status', [ $this, 'set_item_status' ] );
-        add_action( 'wp_ajax_sqc_save_item_label', [ $this, 'save_item_label' ] );
-        add_action( 'wp_ajax_sqc_add_item', [ $this, 'add_item' ] );
-        add_action( 'wp_ajax_sqc_delete_item', [ $this, 'delete_item' ] );
-        add_action( 'wp_ajax_sqc_move_item', [ $this, 'move_item' ] );
-        add_action( 'wp_ajax_sqc_add_section', [ $this, 'add_section' ] );
-        add_action( 'wp_ajax_sqc_save_section', [ $this, 'save_section' ] );
-        add_action( 'wp_ajax_sqc_delete_section', [ $this, 'delete_section' ] );
-        add_action( 'wp_ajax_sqc_reorder_sections', [ $this, 'reorder_sections' ] );
-        add_action( 'wp_ajax_sqc_add_checklist', [ $this, 'add_checklist' ] );
-        add_action( 'wp_ajax_sqc_save_checklist', [ $this, 'save_checklist' ] );
-        add_action( 'wp_ajax_sqc_delete_checklist', [ $this, 'delete_checklist' ] );
-        add_action( 'wp_ajax_sqc_reorder_checklists', [ $this, 'reorder_checklists' ] );
+        add_action( 'wp_ajax_sqcheck_set_item_status', [ $this, 'set_item_status' ] );
+        add_action( 'wp_ajax_sqcheck_save_item_label', [ $this, 'save_item_label' ] );
+        add_action( 'wp_ajax_sqcheck_add_item', [ $this, 'add_item' ] );
+        add_action( 'wp_ajax_sqcheck_delete_item', [ $this, 'delete_item' ] );
+        add_action( 'wp_ajax_sqcheck_move_item', [ $this, 'move_item' ] );
+        add_action( 'wp_ajax_sqcheck_add_section', [ $this, 'add_section' ] );
+        add_action( 'wp_ajax_sqcheck_save_section', [ $this, 'save_section' ] );
+        add_action( 'wp_ajax_sqcheck_delete_section', [ $this, 'delete_section' ] );
+        add_action( 'wp_ajax_sqcheck_reorder_sections', [ $this, 'reorder_sections' ] );
+        add_action( 'wp_ajax_sqcheck_add_checklist', [ $this, 'add_checklist' ] );
+        add_action( 'wp_ajax_sqcheck_save_checklist', [ $this, 'save_checklist' ] );
+        add_action( 'wp_ajax_sqcheck_delete_checklist', [ $this, 'delete_checklist' ] );
+        add_action( 'wp_ajax_sqcheck_reorder_checklists', [ $this, 'reorder_checklists' ] );
     } // End __construct()
 
 

@@ -34,7 +34,7 @@ class QuickActions {
      * Constructor
      */
     private function __construct() {
-        add_action( 'wp_ajax_sqc_run_quick_action', [ $this, 'ajax_run' ] );
+        add_action( 'wp_ajax_sqcheck_run_quick_action', [ $this, 'ajax_run' ] );
     } // End __construct()
 
 
@@ -71,7 +71,7 @@ class QuickActions {
      * @return void
      */
     public function ajax_run() : void {
-        check_ajax_referer( 'sqc_quick_actions_nonce', 'nonce' );
+        check_ajax_referer( 'sqcheck_quick_actions_nonce', 'nonce' );
 
         if ( ! Access::can_manage() ) {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to do this.', 'site-quality-check' ) ], 403 );
@@ -105,7 +105,7 @@ class QuickActions {
             return [ 'success' => false, 'message' => __( 'Gravity Forms is not active.', 'site-quality-check' ) ];
         }
 
-        $selected_form_id = (int) get_option( 'sqc_contact_form_id', 0 );
+        $selected_form_id = (int) get_option( 'sqcheck_contact_form_id', 0 );
         $forms = $selected_form_id ? [ \GFAPI::get_form( $selected_form_id ) ] : \GFAPI::get_forms();
         $forms = array_filter( $forms );
 
@@ -157,7 +157,7 @@ class QuickActions {
     private function check_404s() : array {
         $urls = [ home_url( '/' ) ];
 
-        $contact_page_id = (int) get_option( 'sqc_contact_page_id', 0 );
+        $contact_page_id = (int) get_option( 'sqcheck_contact_page_id', 0 );
 
         if ( $contact_page_id && get_post_status( $contact_page_id ) === 'publish' ) {
             $urls[] = get_permalink( $contact_page_id );

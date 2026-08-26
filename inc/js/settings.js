@@ -15,41 +15,41 @@
     var isDirty = false;
 
     $( document ).ready( function () {
-        $saveButton = $( '#sqc-subheader .sqc-button' );
+        $saveButton = $( '#sqcheck-subheader .sqcheck-button' );
         originalText = $saveButton.text();
 
-        $( document ).on( 'input change', '.sqc-settings-grid [name]', function () {
+        $( document ).on( 'input change', '.sqcheck-settings-grid [name]', function () {
             markDirty();
         } );
 
         // Menu Title
-        $( document ).on( 'input', '#sqc_menu_title', function () {
+        $( document ).on( 'input', '#sqcheck_menu_title', function () {
             var target = $( 'li#toplevel_page_site-quality-check .wp-menu-name' );
             target.text( $( this ).val() || '...' );
         } );
 
         // Page Title
-        $( document ).on( 'input', '#sqc_page_title', function () {
-            var target = $( '#sqc-header h1' );
+        $( document ).on( 'input', '#sqcheck_page_title', function () {
+            var target = $( '#sqcheck-header h1' );
             target.text( $( this ).val() || '...' );
         } );
 
         // Menu Icon
-        $( document ).on( 'change', '#sqc_menu_icon', function () {
+        $( document ).on( 'change', '#sqcheck_menu_icon', function () {
             var icon = $( this ).val();
             var target = $( 'li#toplevel_page_site-quality-check .wp-menu-image' );
             target.attr( 'class', 'wp-menu-image dashicons-before dashicons-' + icon );
         } );
 
         // Logo
-        $( document ).on( 'input', '#sqc_logo', function () {
+        $( document ).on( 'input', '#sqcheck_logo', function () {
             var url = $( this ).val();
-            var target = $( '#sqc-header .logo' );
+            var target = $( '#sqcheck-header .logo' );
             url ? target.attr( 'src', url ).show() : target.hide();
         } );
 
         // Upload Settings
-        $( document ).on( 'change', '#sqc-upload-settings', function ( e ) {
+        $( document ).on( 'change', '#sqcheck-upload-settings', function ( e ) {
             var file = e.target.files[ 0 ];
 
             if ( ! file ) {
@@ -63,11 +63,11 @@
                     var data = JSON.parse( event.target.result );
                     applyUploadedSettings( data.settings || {} );
 
-                    $( '#sqc-upload-filename' ).text( file.name ).show();
+                    $( '#sqcheck-upload-filename' ).text( file.name ).show();
                     markDirty();
                 } catch ( err ) {
                     window.alert( 'Invalid JSON file. Please check the file and try again.' );
-                    $( '#sqc-upload-settings' ).val( '' );
+                    $( '#sqcheck-upload-settings' ).val( '' );
                 }
             };
 
@@ -92,12 +92,12 @@
      * Map of exported settings keys to their corresponding field IDs.
      */
     var SETTINGS_FIELD_MAP = {
-        menu_title: 'sqc_menu_title',
-        page_title: 'sqc_page_title',
-        menu_icon: 'sqc_menu_icon',
-        logo: 'sqc_logo',
-        contact_page_id: 'sqc_contact_page_id',
-        contact_form_id: 'sqc_contact_form_id'
+        menu_title: 'sqcheck_menu_title',
+        page_title: 'sqcheck_page_title',
+        menu_icon: 'sqcheck_menu_icon',
+        logo: 'sqcheck_logo',
+        contact_page_id: 'sqcheck_contact_page_id',
+        contact_form_id: 'sqcheck_contact_form_id'
     };
 
 
@@ -123,34 +123,34 @@
         } );
 
         if ( settings.hasOwnProperty( 'stale_thresholds' ) ) {
-            $( '[name="sqc_stale_thresholds[warning]"]' ).val( settings.stale_thresholds.warning );
-            $( '[name="sqc_stale_thresholds[danger]"]' ).val( settings.stale_thresholds.danger );
-            $( '[name="sqc_stale_thresholds[critical]"]' ).val( settings.stale_thresholds.critical );
+            $( '[name="sqcheck_stale_thresholds[warning]"]' ).val( settings.stale_thresholds.warning );
+            $( '[name="sqcheck_stale_thresholds[danger]"]' ).val( settings.stale_thresholds.danger );
+            $( '[name="sqcheck_stale_thresholds[critical]"]' ).val( settings.stale_thresholds.critical );
         }
 
         if ( settings.hasOwnProperty( 'stale_post_types' ) ) {
-            $( '[name="sqc_stale_post_types[]"]' ).prop( 'checked', false );
+            $( '[name="sqcheck_stale_post_types[]"]' ).prop( 'checked', false );
             settings.stale_post_types.forEach( function ( type ) {
-                $( '[name="sqc_stale_post_types[]"][value="' + type + '"]' ).prop( 'checked', true );
+                $( '[name="sqcheck_stale_post_types[]"][value="' + type + '"]' ).prop( 'checked', true );
             } );
         }
 
         if ( settings.hasOwnProperty( 'enabled_quick_actions' ) ) {
-            $( '[name="sqc_enabled_quick_actions[]"]' ).prop( 'checked', false );
+            $( '[name="sqcheck_enabled_quick_actions[]"]' ).prop( 'checked', false );
             settings.enabled_quick_actions.forEach( function ( action ) {
-                $( '[name="sqc_enabled_quick_actions[]"][value="' + action + '"]' ).prop( 'checked', true );
+                $( '[name="sqcheck_enabled_quick_actions[]"][value="' + action + '"]' ).prop( 'checked', true );
             } );
         }
 
         if ( settings.hasOwnProperty( 'allowed_roles' ) ) {
-            $( '[name="sqc_allowed_roles[]"]' ).prop( 'checked', false );
+            $( '[name="sqcheck_allowed_roles[]"]' ).prop( 'checked', false );
             settings.allowed_roles.forEach( function ( role ) {
-                $( '[name="sqc_allowed_roles[]"][value="' + role + '"]' ).prop( 'checked', true );
+                $( '[name="sqcheck_allowed_roles[]"][value="' + role + '"]' ).prop( 'checked', true );
             } );
         }
 
         if ( settings.hasOwnProperty( 'clear_data_on_uninstall' ) ) {
-            $( '[name="sqc_clear_data_on_uninstall"]' ).prop( 'checked', !! settings.clear_data_on_uninstall );
+            $( '[name="sqcheck_clear_data_on_uninstall"]' ).prop( 'checked', !! settings.clear_data_on_uninstall );
         }
     } // End applyUploadedSettings()
 
@@ -164,7 +164,7 @@
         }
 
         isDirty = true;
-        $( '#sqc-save-reminder' ).fadeIn( 200 );
+        $( '#sqcheck-save-reminder' ).fadeIn( 200 );
     } // End markDirty()
 
 
@@ -184,7 +184,7 @@
     function gatherSettings() {
         var data = {};
 
-        $( '.sqc-settings-grid [name]' ).each( function () {
+        $( '.sqcheck-settings-grid [name]' ).each( function () {
             var $field = $( this );
             var name = $field.attr( 'name' ).replace( /\[\]$/, '' );
             var val;
@@ -228,7 +228,7 @@
         var settings = gatherSettings();
         var originalTitle = startSavingTitle();
 
-        $( '#sqc-save-reminder' ).hide();
+        $( '#sqcheck-save-reminder' ).hide();
         isDirty = false;
 
         showSaving();
@@ -238,23 +238,23 @@
             method: 'POST',
             dataType: 'json',
             data: {
-                action: 'sqc_save_settings',
-                nonce: sqcSettings.nonce,
+                action: 'sqcheck_save_settings',
+                nonce: sqcheckSettings.nonce,
                 settings: settings
             },
             success: function ( response ) {
                 stopSavingTitle( originalTitle );
 
                 if ( response.success ) {
-                    showResult( sqcSettings.savedText );
+                    showResult( sqcheckSettings.savedText );
                     clearDirty();
                 } else {
-                    showResult( response.data || sqcSettings.errorText, false );
+                    showResult( response.data || sqcheckSettings.errorText, false );
                 }
             },
             error: function () {
                 stopSavingTitle( originalTitle );
-                showResult( sqcSettings.errorText, false );
+                showResult( sqcheckSettings.errorText, false );
             }
         } );
     } // End saveSettings()
@@ -269,11 +269,11 @@
         var originalTitle = document.title;
         var dots = 0;
 
-        document.title = sqcSettings.savingText;
+        document.title = sqcheckSettings.savingText;
 
         savingInterval = setInterval( function () {
             dots = ( dots + 1 ) % 4;
-            document.title = sqcSettings.savingText + '.'.repeat( dots );
+            document.title = sqcheckSettings.savingText + '.'.repeat( dots );
         }, 500 );
 
         return originalTitle;
@@ -295,8 +295,8 @@
      * Show the spinning save state.
      */
     function showSaving() {
-        $saveButton.addClass( 'sqc-button-saving' ).prop( 'disabled', true ).html( '<span class="dashicons dashicons-update spin"></span> ' + sqcSettings.savingText + '...' );
-        $( '#sqc-save-status' ).remove();
+        $saveButton.addClass( 'sqcheck-button-saving' ).prop( 'disabled', true ).html( '<span class="dashicons dashicons-update spin"></span> ' + sqcheckSettings.savingText + '...' );
+        $( '#sqcheck-save-status' ).remove();
     } // End showSaving()
 
 
@@ -309,9 +309,9 @@
     function showResult( message, success ) {
         success = ( undefined === success ) ? true : success;
 
-        $saveButton.removeClass( 'sqc-button-saving' ).prop( 'disabled', false ).text( originalText );
+        $saveButton.removeClass( 'sqcheck-button-saving' ).prop( 'disabled', false ).text( originalText );
 
-        var $status = $( '<span id="sqc-save-status"></span>' ).text( message ).css( {
+        var $status = $( '<span id="sqcheck-save-status"></span>' ).text( message ).css( {
             marginLeft: '10px',
             color: success ? 'green' : 'red',
             fontWeight: 'bold'

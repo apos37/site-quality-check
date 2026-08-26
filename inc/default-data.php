@@ -16,7 +16,7 @@ class DefaultData {
     /**
      * Option flag marking that default checklists have been seeded.
      */
-    public const SEEDED_OPTION = 'sqc_defaults_seeded';
+    public const SEEDED_OPTION = 'sqcheck_defaults_seeded';
 
 
     /**
@@ -39,7 +39,7 @@ class DefaultData {
      * Constructor
      */
     private function __construct() {
-        add_action( 'sqc_activated', [ $this, 'maybe_seed' ] );
+        add_action( 'sqcheck_activated', [ $this, 'maybe_seed' ] );
     } // End __construct()
 
 

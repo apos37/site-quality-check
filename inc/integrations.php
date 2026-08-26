@@ -33,7 +33,7 @@ class Integrations {
      * Constructor
      */
     private function __construct() {
-        add_action( 'wp_ajax_sqc_activate_plugin', [ $this, 'ajax_activate_plugin' ] );
+        add_action( 'wp_ajax_sqcheck_activate_plugin', [ $this, 'ajax_activate_plugin' ] );
     } // End __construct()
 
 
@@ -130,7 +130,7 @@ class Integrations {
         ];
 
         /**
-         * Filter: sqc_integration_plugins
+         * Filter: sqcheck_integration_plugins
          *
          * Add your own plugin to the Site Quality Check Integrations page.
          *
@@ -138,7 +138,7 @@ class Integrations {
          *
          * Example:
          *
-         * add_filter( 'sqc_integration_plugins', function ( $plugins ) {
+         * add_filter( 'sqcheck_integration_plugins', function ( $plugins ) {
          *     $plugins[ 'my-plugin' ] = [
          *         'name'        => 'My Plugin',
          *         'file'        => 'my-plugin/my-plugin.php',
@@ -150,7 +150,7 @@ class Integrations {
          *     return $plugins;
          * } );
          */
-        return apply_filters( 'sqc_integration_plugins', $plugins );
+        return apply_filters( 'sqcheck_integration_plugins', $plugins );
     } // End get_plugin_list()
 
 
@@ -303,58 +303,58 @@ class Integrations {
         }
 
         wp_enqueue_style(
-            'sqc-integrations',
+            'sqcheck-integrations',
             Bootstrap::url() . 'inc/css/integrations.css',
-            [ 'sqc-theme' ],
+            [ 'sqcheck-theme' ],
             Bootstrap::script_version()
         );
 
         wp_enqueue_script( 'updates' );
         wp_enqueue_script(
-            'sqc-integrations',
+            'sqcheck-integrations',
             Bootstrap::url() . 'inc/js/integrations.js',
             [ 'jquery', 'updates' ],
             Bootstrap::script_version(),
             true
         );
 
-        wp_localize_script( 'sqc-integrations', 'sqcIntegrations', [
+        wp_localize_script( 'sqcheck-integrations', 'sqcheckIntegrations', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-            'nonce'   => wp_create_nonce( 'sqc_integrations_nonce' ),
+            'nonce'   => wp_create_nonce( 'sqcheck_integrations_nonce' ),
         ] );
 
         $plugins = self::get_plugin_list();
         ?>
-        <div class="wrap sqc-content-wrap sqc-integrations">
+        <div class="wrap sqcheck-content-wrap sqcheck-integrations">
             <p><?php esc_html_e( 'Site Quality Check works great on its own, but pairs with these plugins to add extra features. Install, activate, or learn more about each one below.', 'site-quality-check' ); ?></p>
 
-            <div class="sqc-integrations-list">
+            <div class="sqcheck-integrations-list">
                 <?php foreach ( $plugins as $slug => $plugin ) : ?>
                     <?php
                     $plugin_file = $plugin[ 'file' ] ?? '';
                     $is_active = self::is_active( $plugin_file );
                     $is_installed = self::is_installed( $plugin_file );
                     ?>
-                    <div class="sqc-integration-card">
-                        <div class="sqc-integration-card-header">
+                    <div class="sqcheck-integration-card">
+                        <div class="sqcheck-integration-card-header">
                             <?php if ( ! empty( $plugin[ 'logo' ] ) ) : ?>
                                 <img src="<?php echo esc_url( $plugin[ 'logo' ] ); ?>" alt="" class="logo">
                             <?php endif; ?>
                             <h2><?php echo esc_html( $plugin[ 'name' ] ); ?></h2>
                         </div>
-                        <div class="sqc-integration-card-body">
+                        <div class="sqcheck-integration-card-body">
                             <p><?php echo esc_html( $plugin[ 'description' ] ); ?></p>
-                            <p class="sqc-integration-detail"><strong><?php esc_html_e( 'Integration:', 'site-quality-check' ); ?></strong> <?php echo esc_html( $plugin[ 'integration' ] ); ?></p>
+                            <p class="sqcheck-integration-detail"><strong><?php esc_html_e( 'Integration:', 'site-quality-check' ); ?></strong> <?php echo esc_html( $plugin[ 'integration' ] ); ?></p>
                         </div>
-                        <div class="sqc-integration-card-footer">
+                        <div class="sqcheck-integration-card-footer">
                             <?php if ( $is_active ) : ?>
-                                <span class="sqc-badge sqc-badge-success"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Active', 'site-quality-check' ); ?></span>
+                                <span class="sqcheck-badge sqcheck-badge-success"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Active', 'site-quality-check' ); ?></span>
                             <?php elseif ( $is_installed ) : ?>
-                                <button type="button" class="sqc-button sqc-button-wp-blue sqc-activate-plugin" data-file="<?php echo esc_attr( $plugin_file ); ?>"><?php esc_html_e( 'Activate', 'site-quality-check' ); ?></button>
+                                <button type="button" class="sqcheck-button sqcheck-button-wp-blue sqcheck-activate-plugin" data-file="<?php echo esc_attr( $plugin_file ); ?>"><?php esc_html_e( 'Activate', 'site-quality-check' ); ?></button>
                             <?php elseif ( $plugin[ 'wp_repo' ] ?? false ) : ?>
-                                <button type="button" class="sqc-button sqc-install-plugin" data-slug="<?php echo esc_attr( $slug ); ?>" data-installed-file="<?php echo esc_attr( $plugin_file ); ?>"><?php esc_html_e( 'Install Now', 'site-quality-check' ); ?></button>
+                                <button type="button" class="sqcheck-button sqcheck-install-plugin" data-slug="<?php echo esc_attr( $slug ); ?>" data-installed-file="<?php echo esc_attr( $plugin_file ); ?>"><?php esc_html_e( 'Install Now', 'site-quality-check' ); ?></button>
                             <?php else : ?>
-                                <a class="sqc-button" href="<?php echo esc_url( $plugin[ 'url' ] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get Plugin', 'site-quality-check' ); ?></a>
+                                <a class="sqcheck-button" href="<?php echo esc_url( $plugin[ 'url' ] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get Plugin', 'site-quality-check' ); ?></a>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -387,7 +387,7 @@ class Integrations {
      * @return void
      */
     public function ajax_activate_plugin() : void {
-        check_ajax_referer( 'sqc_integrations_nonce', 'nonce' );
+        check_ajax_referer( 'sqcheck_integrations_nonce', 'nonce' );
 
         if ( ! current_user_can( 'activate_plugins' ) ) {
             wp_send_json_error( __( 'You do not have permission to do this.', 'site-quality-check' ) );

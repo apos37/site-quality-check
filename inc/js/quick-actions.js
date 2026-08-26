@@ -8,16 +8,16 @@
     'use strict';
 
     $( document ).ready( function () {
-        $( document ).on( 'click', '.sqc-quick-action-btn', function () {
+        $( document ).on( 'click', '.sqcheck-quick-action-btn', function () {
             var button = $( this );
             var action = button.data( 'action' );
             var originalText = button.text();
 
-            button.prop( 'disabled', true ).addClass( 'sqc-button-loading' ).html( '<span class="dashicons dashicons-update spin"></span> ' + sqcQuickActions.i18n.running );
+            button.prop( 'disabled', true ).addClass( 'sqcheck-button-loading' ).html( '<span class="dashicons dashicons-update spin"></span> ' + sqcheckQuickActions.i18n.running );
 
-            $.post( sqcQuickActions.ajaxUrl, {
-                action: 'sqc_run_quick_action',
-                nonce: sqcQuickActions.nonce,
+            $.post( sqcheckQuickActions.ajaxUrl, {
+                action: 'sqcheck_run_quick_action',
+                nonce: sqcheckQuickActions.nonce,
                 quick_action: action
             } )
                 .done( function ( response ) {
@@ -30,7 +30,7 @@
                     showToast( 'Request failed.', false );
                 } )
                 .always( function () {
-                    button.prop( 'disabled', false ).removeClass( 'sqc-button-loading' ).text( originalText );
+                    button.prop( 'disabled', false ).removeClass( 'sqcheck-button-loading' ).text( originalText );
                 } );
         } );
     } );
@@ -43,22 +43,22 @@
      * @param {boolean} success
      */
     function showToast( message, success ) {
-        var toast = $( '#sqc-toast' );
+        var toast = $( '#sqcheck-toast' );
 
         toast
             .text( message )
-            .removeClass( 'sqc-toast-success sqc-toast-error' )
-            .addClass( success ? 'sqc-toast-success' : 'sqc-toast-error' )
+            .removeClass( 'sqcheck-toast-success sqcheck-toast-error' )
+            .addClass( success ? 'sqcheck-toast-success' : 'sqcheck-toast-error' )
             .stop( true, true )
             .fadeIn( 150 );
 
-        clearTimeout( toast.data( 'sqc-timeout' ) );
+        clearTimeout( toast.data( 'sqcheck-timeout' ) );
 
         var timeout = setTimeout( function () {
             toast.fadeOut( 300 );
         }, 6000 );
 
-        toast.data( 'sqc-timeout', timeout );
+        toast.data( 'sqcheck-timeout', timeout );
     } // End showToast()
 
 } )( jQuery );

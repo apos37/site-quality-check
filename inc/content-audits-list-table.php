@@ -44,7 +44,7 @@ class ContentAuditsListTable extends \WP_List_Table {
     public function __construct( string $audit_type, callable $details_renderer ) {
         $this->audit_type = $audit_type;
         $this->details_renderer = $details_renderer;
-        $this->showing_omitted = isset( $_REQUEST[ 'sqc_view' ] ) && 'omitted' === $_REQUEST[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
+        $this->showing_omitted = isset( $_REQUEST[ 'sqcheck_view' ] ) && 'omitted' === $_REQUEST[ 'sqcheck_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
         parent::__construct( [
             'singular' => 'audit_result',
@@ -104,9 +104,9 @@ class ContentAuditsListTable extends \WP_List_Table {
         ];
 
         if ( $this->showing_omitted ) {
-            $actions[ 'unomit' ] = '<a href="#" class="sqc-unomit-result" data-id="' . esc_attr( $item[ 'id' ] ) . '">' . esc_html__( 'Un-omit', 'site-quality-check' ) . '</a>';
+            $actions[ 'unomit' ] = '<a href="#" class="sqcheck-unomit-result" data-id="' . esc_attr( $item[ 'id' ] ) . '">' . esc_html__( 'Un-omit', 'site-quality-check' ) . '</a>';
         } else {
-            $actions[ 'omit' ] = '<a href="#" class="sqc-omit-result" data-id="' . esc_attr( $item[ 'id' ] ) . '">' . esc_html__( 'Omit', 'site-quality-check' ) . '</a>';
+            $actions[ 'omit' ] = '<a href="#" class="sqcheck-omit-result" data-id="' . esc_attr( $item[ 'id' ] ) . '">' . esc_html__( 'Omit', 'site-quality-check' ) . '</a>';
         }
 
         return $title . $this->row_actions( $actions );
@@ -165,11 +165,11 @@ class ContentAuditsListTable extends \WP_List_Table {
             return;
         }
 
-        $table = $wpdb->prefix . 'sqc_audit_results';
+        $table = $wpdb->prefix . 'sqcheck_audit_results';
         $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
         $wpdb->query( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            "UPDATE {$table} SET omitted = %d WHERE id IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is hardcoded, $placeholders are %d format specifiers, not raw values.
+            "UPDATE {$table} SET omitted = %d WHERE id IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is hardcoded via $wpdb->prefix, not user input.
             array_merge( [ 'omit' === $action ? 1 : 0 ], $ids )
         ) );
     } // End process_bulk_action()

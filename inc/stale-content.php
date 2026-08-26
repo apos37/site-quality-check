@@ -16,7 +16,7 @@ class StaleContent {
     /**
      * Meta key marking a post as permanently omitted from stale content views.
      */
-    public const OMIT_META_KEY = '_sqc_stale_omitted';
+    public const OMIT_META_KEY = '_sqcheck_stale_omitted';
 
 
     /**
@@ -49,10 +49,10 @@ class StaleContent {
      * Constructor
      */
     private function __construct() {
-        add_action( 'wp_ajax_sqc_omit_stale_post', [ $this, 'ajax_omit_post' ] );
-        add_action( 'wp_ajax_sqc_unomit_stale_post', [ $this, 'ajax_unomit_post' ] );
-        add_action( 'sqc_subheader_left', [ $this, 'render_subheader_toggle' ] );
-        add_action( 'sqc_subheader_right', [ $this, 'render_subheader_search' ] );
+        add_action( 'wp_ajax_sqcheck_omit_stale_post', [ $this, 'ajax_omit_post' ] );
+        add_action( 'wp_ajax_sqcheck_unomit_stale_post', [ $this, 'ajax_unomit_post' ] );
+        add_action( 'sqcheck_subheader_left', [ $this, 'render_subheader_toggle' ] );
+        add_action( 'sqcheck_subheader_right', [ $this, 'render_subheader_search' ] );
     } // End __construct()
 
 
@@ -62,7 +62,7 @@ class StaleContent {
      * @return array
      */
     public static function get_thresholds() : array {
-        $saved = get_option( 'sqc_stale_thresholds', [] );
+        $saved = get_option( 'sqcheck_stale_thresholds', [] );
 
         return wp_parse_args( is_array( $saved ) ? $saved : [], self::DEFAULT_THRESHOLDS );
     } // End get_thresholds()
@@ -74,7 +74,7 @@ class StaleContent {
      * @return array
      */
     public static function get_included_post_types() : array {
-        $saved = get_option( 'sqc_stale_post_types', [ 'post', 'page' ] );
+        $saved = get_option( 'sqcheck_stale_post_types', [ 'post', 'page' ] );
 
         return is_array( $saved ) && ! empty( $saved ) ? $saved : [ 'post', 'page' ];
     } // End get_included_post_types()
@@ -228,13 +228,13 @@ class StaleContent {
      * @return void
      */
     public function ajax_omit_post() : void {
-        check_ajax_referer( 'sqc_stale_content_nonce', 'nonce' );
+        check_ajax_referer( 'sqcheck_stale_content_nonce', 'nonce' );
 
         if ( ! Access::can_access() ) {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to do this.', 'site-quality-check' ) ], 403 );
         }
 
-        $post_id = (int) wp_unslash( $_POST[ 'post_id' ] ?? 0 );
+        $post_id = (int) wp_unslash( $_POST[ 'post_id' ] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified via check_ajax_referer above.
 
         self::omit_post( $post_id );
 
@@ -248,13 +248,13 @@ class StaleContent {
      * @return void
      */
     public function ajax_unomit_post() : void {
-        check_ajax_referer( 'sqc_stale_content_nonce', 'nonce' );
+        check_ajax_referer( 'sqcheck_stale_content_nonce', 'nonce' );
 
         if ( ! Access::can_access() ) {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to do this.', 'site-quality-check' ) ], 403 );
         }
 
-        $post_id = (int) wp_unslash( $_POST[ 'post_id' ] ?? 0 );
+        $post_id = (int) wp_unslash( $_POST[ 'post_id' ] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified via check_ajax_referer above.
 
         self::unomit_post( $post_id );
 
@@ -273,13 +273,13 @@ class StaleContent {
             return;
         }
 
-        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
+        $showing_omitted = isset( $_GET[ 'sqcheck_view' ] ) && 'omitted' === $_GET[ 'sqcheck_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
         $omitted_count = count( self::get_omitted_posts() );
         ?>
         <?php if ( $showing_omitted ) : ?>
-            <a href="<?php echo esc_url( remove_query_arg( 'sqc_view' ) ); ?>" class="sqc-button"><?php esc_html_e( 'Show Stale Content', 'site-quality-check' ); ?></a>
+            <a href="<?php echo esc_url( remove_query_arg( 'sqcheck_view' ) ); ?>" class="sqcheck-button"><?php esc_html_e( 'Show Stale Content', 'site-quality-check' ); ?></a>
         <?php else : ?>
-            <a href="<?php echo esc_url( add_query_arg( 'sqc_view', 'omitted' ) ); ?>" class="sqc-button"><?php echo esc_html( sprintf(
+            <a href="<?php echo esc_url( add_query_arg( 'sqcheck_view', 'omitted' ) ); ?>" class="sqcheck-button"><?php echo esc_html( sprintf(
                 /* translators: %d: number of omitted items */
                 __( 'Show Omitted (%d)', 'site-quality-check' ),
                 $omitted_count
@@ -302,18 +302,18 @@ class StaleContent {
 
         $search_value = sanitize_text_field( wp_unslash( $_GET[ 's' ] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
         ?>
-        <form method="get" class="sqc-posttype-search">
+        <form method="get" class="sqcheck-posttype-search">
             <?php foreach ( $_GET as $key => $value ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
                 if ( in_array( $key, [ 's', 'paged' ], true ) ) continue;
             ?>
                 <input type="hidden" name="<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $value ); ?>">
             <?php endforeach; ?>
 
-            <input type="search" name="s" value="<?php echo esc_attr( $search_value ); ?>" placeholder="<?php esc_attr_e( 'Search', 'site-quality-check' ); ?>" class="sqc-search-input">
-            <button type="submit" class="sqc-button"><?php esc_html_e( 'Search', 'site-quality-check' ); ?></button>
+            <input type="search" name="s" value="<?php echo esc_attr( $search_value ); ?>" placeholder="<?php esc_attr_e( 'Search', 'site-quality-check' ); ?>" class="sqcheck-search-input">
+            <button type="submit" class="sqcheck-button"><?php esc_html_e( 'Search', 'site-quality-check' ); ?></button>
 
             <?php if ( $search_value ) : ?>
-                <a href="<?php echo esc_url( remove_query_arg( 's' ) ); ?>" class="sqc-button"><?php esc_html_e( 'Clear', 'site-quality-check' ); ?></a>
+                <a href="<?php echo esc_url( remove_query_arg( 's' ) ); ?>" class="sqcheck-button"><?php esc_html_e( 'Clear', 'site-quality-check' ); ?></a>
             <?php endif; ?>
         </form>
         <?php
@@ -331,32 +331,32 @@ class StaleContent {
         }
 
         wp_enqueue_script(
-            'sqc-stale-content',
+            'sqcheck-stale-content',
             Bootstrap::url() . 'inc/js/stale-content.js',
             [ 'jquery' ],
             Bootstrap::script_version(),
             true
         );
 
-        wp_localize_script( 'sqc-stale-content', 'sqcStaleContent', [
+        wp_localize_script( 'sqcheck-stale-content', 'sqcheckStaleContent', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-            'nonce'   => wp_create_nonce( 'sqc_stale_content_nonce' ),
+            'nonce'   => wp_create_nonce( 'sqcheck_stale_content_nonce' ),
         ] );
 
         $table = new StaleContentListTable();
         $table->prepare_items();
-        $showing_omitted = isset( $_GET[ 'sqc_view' ] ) && 'omitted' === $_GET[ 'sqc_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
+        $showing_omitted = isset( $_GET[ 'sqcheck_view' ] ) && 'omitted' === $_GET[ 'sqcheck_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
         ?>
-        <div class="wrap sqc-content-wrap sqc-stale-content">
+        <div class="wrap sqcheck-content-wrap sqcheck-stale-content">
             <?php if ( $showing_omitted ) : ?>
-                <div class="sqc-omitted-banner">
+                <div class="sqcheck-omitted-banner">
                     <span class="dashicons dashicons-hidden"></span>
                     <?php esc_html_e( 'Showing omitted items — these are excluded from the stale content list above.', 'site-quality-check' ); ?>
                 </div>
             <?php endif; ?>
 
-            <div class="sqc-box">
-                <div class="sqc-box-body">
+            <div class="sqcheck-box">
+                <div class="sqcheck-box-body">
                     <form method="get">
                         <input type="hidden" name="page" value="<?php echo esc_attr( Menu::MENU_SLUG . '-stale-content' ); ?>">
                         <?php $table->display(); ?>
