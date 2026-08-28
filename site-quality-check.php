@@ -63,7 +63,6 @@ final class Bootstrap {
         'site-health.php',
         'checklists.php',
         'stale-content.php',
-        'broken-links.php',
         'quick-actions.php',
         'content-audits.php',
     ];
@@ -115,6 +114,8 @@ final class Bootstrap {
         $this->check_environment();
         add_action( 'plugins_loaded', [ $this, 'load_files' ] );
         add_action( 'plugins_loaded', [ $this, 'load_dashboard_widgets' ] );
+        add_action( 'plugins_loaded', [ $this, 'load_integrations' ], 20 );
+        add_action( 'admin_init', [ $this, 'maybe_create_tables' ] );
         register_activation_hook( __FILE__, [ $this, 'activate' ] );
     } // End __construct()
 
@@ -242,6 +243,30 @@ final class Bootstrap {
 
 
     /**
+     * Load each active integration's integration.php file from inc/integrations/{slug}/.
+     * Only loads integrations whose companion plugin is actually active, since each
+     * integration.php is expected to reference the other plugin's classes/functions directly.
+     *
+     * @return void
+     */
+    public function load_integrations() : void {
+        $integrations_dir = self::dir() . 'inc/integrations/';
+
+        if ( ! is_dir( $integrations_dir ) ) {
+            return;
+        }
+
+        foreach ( glob( $integrations_dir . '*', GLOB_ONLYDIR ) as $folder ) {
+            $file = $folder . '/integration.php';
+
+            if ( file_exists( $file ) ) {
+                require_once $file;
+            }
+        }
+    } // End load_integrations()
+
+
+    /**
      * Load dashboard widget files
      *
      * @return void
@@ -272,6 +297,24 @@ final class Bootstrap {
             do_action( 'sqcheck_activated' );
         }, 20 );
     } // End activate()
+
+
+    /**
+     * Create tables if they don't already exist. Cheap check via a version-tracked
+     * option, so this only actually queries the schema when the expected version changes.
+     *
+     * @return void
+     */
+    public function maybe_create_tables() : void {
+        $db_version = '1.0';
+
+        if ( get_option( 'sqcheck_db_version' ) === $db_version ) {
+            return;
+        }
+
+        self::create_tables();
+        update_option( 'sqcheck_db_version', $db_version );
+    } // End maybe_create_tables()
 
 
     /**

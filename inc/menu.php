@@ -189,7 +189,7 @@ class Menu {
         $logo = get_option( 'sqcheck_logo', '' );
 
         if ( ! $logo ) {
-            $logo = 'https://pluginrx.com/wp-content/plugins/admin-help-docs/inc/img/logo.png';
+            $logo = self::get_default_logo();
         }
 
         $tabs = [
@@ -223,6 +223,21 @@ class Menu {
         </div>
         <?php
     } // End render_header()
+
+
+    /**
+     * Get the default logo URL, used when no custom logo is set in Settings.
+     * Falls back to the plugin's own bundled logo; integrations can hook
+     * 'sqcheck_default_logo' to provide a better fallback if a compatible
+     * companion plugin (with its own branding) is active.
+     *
+     * @return string
+     */
+    public static function get_default_logo() : string {
+        $default = Bootstrap::url() . 'inc/img/logo.png';
+
+        return apply_filters( 'sqcheck_default_logo', $default );
+    } // End get_default_logo()
 
 
     /**
@@ -286,35 +301,34 @@ class Menu {
             Bootstrap::script_version()
         );
 
-        if ( Integrations::is_admin_help_docs_active() ) {
-            $ahd_colors = Integrations::get_admin_help_docs_colors();
+        $colors = self::get_theme_colors();
 
-            if ( $ahd_colors ) {
-                $map = [
-                    'header_bg'       => '--sqcheck-color-header-bg',
-                    'header_font'     => '--sqcheck-color-header-font',
-                    'header_tab'      => '--sqcheck-color-header-tab',
-                    'header_tab_link' => '--sqcheck-color-header-tab-link',
-                    'doc_accent'      => '--sqcheck-color-accent',
-                    'button'          => '--sqcheck-color-button',
-                    'button_font'     => '--sqcheck-color-button-font',
-                    'button_hover'    => '--sqcheck-color-button-hover',
-                ];
+        if ( ! empty( $colors ) ) {
+            $declarations = [];
 
-                $declarations = [];
+            foreach ( $colors as $var => $value ) {
+                $declarations[] = '--sqcheck-color-' . sanitize_key( $var ) . ': ' . sanitize_text_field( $value ) . ';';
+            }
 
-                foreach ( $map as $ahd_key => $sqcheck_var ) {
-                    if ( ! empty( $ahd_colors[ $ahd_key ] ) ) {
-                        $declarations[] = $sqcheck_var . ': ' . sanitize_hex_color( $ahd_colors[ $ahd_key ] ) . ';';
-                    }
-                }
-
-                if ( $declarations ) {
-                    wp_add_inline_style( 'sqcheck-theme', ':root {' . implode( '', $declarations ) . '}' );
-                }
+            if ( $declarations ) {
+                wp_add_inline_style( 'sqcheck-theme', ':root {' . implode( '', $declarations ) . '}' );
             }
         }
     } // End enqueue_shared_assets()
+
+
+    /**
+     * Get theme color overrides. Empty by default; integrations can hook
+     * 'sqcheck_theme_colors' to provide overrides matching their own color scheme.
+     *
+     * Expected keys: header-bg, header-font, header-tab, header-tab-link,
+     * accent, button, button-font, button-hover.
+     *
+     * @return array
+     */
+    public static function get_theme_colors() : array {
+        return apply_filters( 'sqcheck_theme_colors', [] );
+    } // End get_theme_colors()
 
 } // End class Menu
 

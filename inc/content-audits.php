@@ -2,8 +2,10 @@
 /**
  * CONTENT AUDITS
  *
- * Tabbed content audits: Orphaned Pages, Missing Alt Text, SEO Meta, Mixed Content.
- * Each tab scans in chunks via AJAX and stores results in a custom table.
+ * Tabbed content audits. Tabs, descriptions, and details-column renderers are
+ * all derived from registered audit types (see Audits::get_types() and the
+ * 'sqcheck_audit_types' / 'sqcheck_audit_details_renderers' filters) — this
+ * file has no knowledge of which specific audit types exist.
  */
 
 namespace PluginRx\SiteQualityCheck;
@@ -39,34 +41,31 @@ class ContentAudits {
 
 
     /**
-     * Audit type => label.
+     * Audit type => label, derived from the registered audit types.
      *
      * @return array
      */
     public static function get_audit_tabs() : array {
-        return [
-            'orphaned'      => __( 'Orphaned Pages', 'site-quality-check' ),
-            'alt_text'      => __( 'Missing Alt Text', 'site-quality-check' ),
-            'mixed_content' => __( 'Mixed Content', 'site-quality-check' ),
-            'seo_meta'      => __( 'SEO Meta', 'site-quality-check' ),
-        ];
+        $tabs = [];
+
+        foreach ( Audits::get_types() as $type => $config ) {
+            $tabs[ $type ] = $config[ 'label' ];
+        }
+
+        return $tabs;
     } // End get_audit_tabs()
 
 
     /**
-     * Get an explanatory description for each audit type, shown above the results.
+     * Get an audit type's description.
      *
      * @param string $audit_type
      * @return string
      */
     private static function get_audit_description( string $audit_type ) : string {
-        return match ( $audit_type ) {
-            'orphaned' => __( 'Orphaned pages have no other page or post linking to them, making them hard for visitors and search engines to discover. Fix this by adding an internal link to the page from your navigation menu, a relevant post, or another page on your site.', 'site-quality-check' ),
-            'alt_text' => __( 'This checks images used within your page and post content, including featured images — not every file in your Media Library. Images without alt text are invisible to screen readers and are missed by search engines trying to understand your content. Fix this by editing the image in the block editor, or in the media library if it\'s a featured image, and adding a short, descriptive alt text.', 'site-quality-check' ),
-            'seo_meta' => __( 'Pages missing an SEO title or meta description may show up poorly in search results, using an auto-generated snippet instead of one you control. Fix this by editing the page and filling in the Yoast SEO title and meta description fields.', 'site-quality-check' ),
-            'mixed_content' => __( 'Mixed content means a page served over HTTPS is loading an image or resource over plain HTTP, which browsers may block or flag as insecure. Fix this by editing the page and updating the flagged URL to use https:// instead of http://.', 'site-quality-check' ),
-            default => '',
-        };
+        $types = Audits::get_types();
+
+        return $types[ $audit_type ][ 'description' ] ?? '';
     } // End get_audit_description()
 
 
@@ -77,6 +76,10 @@ class ContentAudits {
      */
     public static function get_current_tab() : string {
         $tabs = array_keys( self::get_audit_tabs() );
+
+        if ( empty( $tabs ) ) {
+            return '';
+        }
 
         if ( isset( $_GET[ 'audit' ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab selector, no state change.
             $tab = sanitize_key( wp_unslash( $_GET[ 'audit' ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -126,11 +129,7 @@ class ContentAudits {
 
         $current_tab = self::get_current_tab();
 
-        if ( 'mixed_content' === $current_tab && 'https' !== wp_parse_url( home_url(), PHP_URL_SCHEME ) ) {
-            return;
-        }
-
-        if ( 'seo_meta' === $current_tab && ! Integrations::is_yoast_active() ) {
+        if ( '' === $current_tab ) {
             return;
         }
 
@@ -138,9 +137,10 @@ class ContentAudits {
         $omitted_count = count( Audits::get_results( $current_tab, true ) );
         ?>
         <span id="sqcheck-audit-last-checked" data-audit-type="<?php echo esc_attr( $current_tab ); ?>">
-            <?php 
+            <?php
             /* translators: %s: date the audit was last checked */
-            echo esc_html( sprintf( __( 'Last checked: %s', 'site-quality-check' ), Audits::get_last_checked_display( $current_tab ) ) ); ?>
+            echo esc_html( sprintf( __( 'Last checked: %s', 'site-quality-check' ), Audits::get_last_checked_display( $current_tab ) ) );
+            ?>
         </span>
 
         <button type="button" class="sqcheck-button sqcheck-refresh-audit" id="sqcheck-refresh-audit" data-audit-type="<?php echo esc_attr( $current_tab ); ?>" title="<?php esc_attr_e( 'Rescan', 'site-quality-check' ); ?>">
@@ -161,13 +161,17 @@ class ContentAudits {
 
 
     /**
-     * Details column renderer for each audit type.
+     * Details column renderer for a given audit type, gathered via filter so
+     * integrations can register renderers for their own audit types.
      *
      * @param string $audit_type
      * @return callable
      */
     private static function get_details_renderer( string $audit_type ) : callable {
-        return match ( $audit_type ) {
+        $renderers = apply_filters( 'sqcheck_audit_details_renderers', [
+            'orphaned' => function ( $details ) {
+                return '—';
+            },
             'alt_text' => function ( $details ) {
                 $labels = [ 'featured' => __( 'Featured Image', 'site-quality-check' ), 'content' => __( 'In Content', 'site-quality-check' ) ];
                 $out = [];
@@ -181,17 +185,13 @@ class ContentAudits {
 
                 return implode( '', $out );
             },
-            'seo_meta' => function ( $details ) {
-                $labels = [ 'title' => __( 'SEO Title', 'site-quality-check' ), 'description' => __( 'Meta Description', 'site-quality-check' ) ];
-                $missing = array_map( fn( $key ) => $labels[ $key ] ?? $key, $details[ 'missing' ] ?? [] );
-                return esc_html( implode( ', ', $missing ) );
-            },
             'mixed_content' => function ( $details ) {
                 return esc_html( implode( ', ', $details[ 'urls' ] ?? [] ) );
             },
-            default => function ( $details ) {
-                return '—';
-            },
+        ] );
+
+        return $renderers[ $audit_type ] ?? function () {
+            return '—';
         };
     } // End get_details_renderer()
 
@@ -218,38 +218,24 @@ class ContentAudits {
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'sqcheck_audits_nonce' ),
             'i18n'    => [
-                'scanning' => __( 'Scanning:', 'site-quality-check' ),
-                'lastChecked' => __( 'Last checked:', 'site-quality-check' ),
+                'scanning' => __( 'Scanning:', 'site-quality-check' )
             ],
         ] );
 
         $current_tab = self::get_current_tab();
-        $showing_omitted = isset( $_GET[ 'sqcheck_view' ] ) && 'omitted' === $_GET[ 'sqcheck_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
-        if ( 'seo_meta' === $current_tab && ! Integrations::is_yoast_active() ) {
+        if ( '' === $current_tab ) {
             ?>
             <div class="wrap sqcheck-content-wrap sqcheck-content-audits">
-                <p><?php echo esc_html( self::get_audit_description( $current_tab ) ); ?></p>
                 <div class="sqcheck-box"><div class="sqcheck-box-body">
-                    <p><?php esc_html_e( 'Yoast SEO is not active. Install it to see missing meta title and description reports.', 'site-quality-check' ); ?></p>
+                    <p><?php esc_html_e( 'No content audits are currently available.', 'site-quality-check' ); ?></p>
                 </div></div>
             </div>
             <?php
             return;
         }
 
-        if ( 'mixed_content' === $current_tab && 'https' !== wp_parse_url( home_url(), PHP_URL_SCHEME ) ) {
-            ?>
-            <div class="wrap sqcheck-content-wrap sqcheck-content-audits">
-                <p><?php echo esc_html( self::get_audit_description( $current_tab ) ); ?></p>
-                <div class="sqcheck-audit-warning-banner">
-                    <span class="dashicons dashicons-warning"></span>
-                    <?php esc_html_e( 'Your site is not using HTTPS. Every WordPress site should be served over HTTPS — most hosts offer free SSL certificates. This check will run automatically once your site is switched to HTTPS.', 'site-quality-check' ); ?>
-                </div>
-            </div>
-            <?php
-            return;
-        }
+        $showing_omitted = isset( $_GET[ 'sqcheck_view' ] ) && 'omitted' === $_GET[ 'sqcheck_view' ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, no state change.
 
         $table = new ContentAuditsListTable( $current_tab, self::get_details_renderer( $current_tab ) );
         $table->prepare_items();
@@ -257,7 +243,7 @@ class ContentAudits {
         <div class="wrap sqcheck-content-wrap sqcheck-content-audits">
             <p><?php echo esc_html( self::get_audit_description( $current_tab ) ); ?></p>
 
-            <?php if ( $showing_omitted ?? false ) : ?>
+            <?php if ( $showing_omitted ) : ?>
                 <div class="sqcheck-omitted-banner">
                     <span class="dashicons dashicons-hidden"></span>
                     <?php esc_html_e( 'Showing omitted items — these are excluded from the active audit above.', 'site-quality-check' ); ?>

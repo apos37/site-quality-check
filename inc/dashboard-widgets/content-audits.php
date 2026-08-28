@@ -27,21 +27,18 @@ add_filter( 'sqcheck_dashboard_widgets', function ( array $widgets ) : array {
  * @return void
  */
 function render_content_audits_widget() : void {
-    $labels = ContentAudits::get_audit_tabs();
+    $tabs = ContentAudits::get_audit_tabs();
     $any_checked = false;
     $total = 0;
 
+    if ( empty( $tabs ) ) {
+        echo '<p>' . esc_html__( 'No content audits are currently available.', 'site-quality-check' ) . '</p>';
+        return;
+    }
+
     echo '<ul class="sqcheck-plain-list">';
 
-    foreach ( $labels as $type => $label ) {
-        if ( 'seo_meta' === $type && ! Integrations::is_yoast_active() ) {
-            continue;
-        }
-
-        if ( 'mixed_content' === $type && 'https' !== wp_parse_url( home_url(), PHP_URL_SCHEME ) ) {
-            continue;
-        }
-
+    foreach ( $tabs as $type => $label ) {
         $last_checked = get_option( 'sqcheck_audit_last_checked_' . $type, 0 );
 
         if ( $last_checked ) {

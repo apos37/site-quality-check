@@ -303,7 +303,8 @@ class Settings {
                             ?>
                         </div>
 
-                        <?php if ( Integrations::is_gravity_forms_active() ) : ?>
+                        <?php $contact_form_providers = apply_filters( 'sqcheck_contact_form_providers', [] ); ?>
+                        <?php if ( ! empty( $contact_form_providers ) ) : ?>
                             <div class="sqcheck-field">
                                 <label>
                                     <?php esc_html_e( 'Contact Form', 'site-quality-check' ); ?>
@@ -311,8 +312,10 @@ class Settings {
                                 </label>
                                 <select name="sqcheck_contact_form_id">
                                     <option value="0"><?php esc_html_e( '— Select a form —', 'site-quality-check' ); ?></option>
-                                    <?php foreach ( \GFAPI::get_forms() as $form ) : ?>
-                                        <option value="<?php echo esc_attr( $form[ 'id' ] ); ?>" <?php selected( $contact_form_id, $form[ 'id' ] ); ?>><?php echo esc_html( $form[ 'title' ] ); ?></option>
+                                    <?php foreach ( $contact_form_providers as $provider ) : ?>
+                                        <?php foreach ( $provider[ 'forms' ] as $form_id => $form_label ) : ?>
+                                            <option value="<?php echo esc_attr( $form_id ); ?>" <?php selected( $contact_form_id, $form_id ); ?>><?php echo esc_html( $form_label ); ?></option>
+                                        <?php endforeach; ?>
                                     <?php endforeach; ?>
                                 </select>
                             </div>

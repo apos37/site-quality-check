@@ -2,8 +2,11 @@
 /**
  * AUDITS
  *
- * Chunked scanning engine for content audits (orphaned pages, alt text,
- * SEO meta, mixed content), storing results in a custom table with omit support.
+ * Chunked scanning engine for content audits, storing results in a custom
+ * table with omit support. Audit types are registered via the
+ * 'sqcheck_audit_types' filter — this file registers the plugin's own
+ * built-in types (orphaned, alt_text, mixed_content); integrations can add
+ * their own (e.g. Yoast's seo_meta) from their own integration.php files.
  */
 
 namespace PluginRx\SiteQualityCheck;
@@ -12,12 +15,6 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 
 class Audits {
-
-    /**
-     * Registered audit types and their scan callbacks.
-     */
-    public const TYPES = [ 'orphaned', 'alt_text', 'seo_meta', 'mixed_content' ];
-
 
     /**
      * Posts scanned per AJAX chunk.
@@ -45,10 +42,54 @@ class Audits {
      * Constructor
      */
     private function __construct() {
+        add_filter( 'sqcheck_audit_types', [ $this, 'register_builtin_types' ] );
         add_action( 'wp_ajax_sqcheck_scan_chunk', [ $this, 'ajax_scan_chunk' ] );
         add_action( 'wp_ajax_sqcheck_omit_audit_result', [ $this, 'ajax_omit_result' ] );
         add_action( 'wp_ajax_sqcheck_unomit_audit_result', [ $this, 'ajax_unomit_result' ] );
     } // End __construct()
+
+
+    /**
+     * Get all registered audit types.
+     *
+     * Each entry: [ 'label' => string, 'description' => string, 'scan_callback' => callable( int $post_id, array $context ) : ?array ]
+     *
+     * @return array
+     */
+    public static function get_types() : array {
+        return apply_filters( 'sqcheck_audit_types', [] );
+    } // End get_types()
+
+
+    /**
+     * Register the plugin's own built-in audit types.
+     *
+     * @param array $types
+     * @return array
+     */
+    public function register_builtin_types( array $types ) : array {
+        $types[ 'orphaned' ] = [
+            'label'         => __( 'Orphaned Pages', 'site-quality-check' ),
+            'description'   => __( 'Orphaned pages have no other page, post, or navigation menu linking to them, making them hard for visitors and search engines to discover. Fix this by adding an internal link to the page from your navigation menu, a relevant post, or another page on your site.', 'site-quality-check' ),
+            'scan_callback' => [ self::class, 'scan_orphaned' ],
+        ];
+
+        $types[ 'alt_text' ] = [
+            'label'         => __( 'Missing Alt Text', 'site-quality-check' ),
+            'description'   => __( 'This checks images used within your page and post content, including featured images — not every file in your Media Library. Images without alt text are invisible to screen readers and are missed by search engines trying to understand your content. Fix this by editing the image in the block editor, or in the media library if it\'s a featured image, and adding a short, descriptive alt text.', 'site-quality-check' ),
+            'scan_callback' => [ self::class, 'scan_alt_text' ],
+        ];
+
+        if ( 'https' === wp_parse_url( home_url(), PHP_URL_SCHEME ) ) {
+            $types[ 'mixed_content' ] = [
+                'label'         => __( 'Mixed Content', 'site-quality-check' ),
+                'description'   => __( 'Mixed content means a page served over HTTPS is loading an image or resource over plain HTTP, which browsers may block or flag as insecure. Fix this by editing the page and updating the flagged URL to use https:// instead of http://.', 'site-quality-check' ),
+                'scan_callback' => [ self::class, 'scan_mixed_content' ],
+            ];
+        }
+
+        return $types;
+    } // End register_builtin_types()
 
 
     /**
@@ -83,22 +124,20 @@ class Audits {
         ) );
         // phpcs:enable
 
-        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $placeholders is a dynamically-built string of %s/%d format specifiers (not raw values), and $query is already built via $wpdb->prepare() above before being passed to get_col().
         if ( ! empty( $omitted_ids ) ) {
             $exclude_placeholders = implode( ',', array_fill( 0, count( $omitted_ids ), '%d' ) );
             $query = $wpdb->prepare(
-                "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders}) AND ID NOT IN ({$exclude_placeholders})",
+                "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders}) AND ID NOT IN ({$exclude_placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders/$exclude_placeholders are %s/%d format specifiers, not raw values.
                 array_merge( $post_types, $omitted_ids )
             );
         } else {
             $query = $wpdb->prepare(
-                "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders})",
+                "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is a %s format specifier string, not a raw value.
                 $post_types
             );
         }
 
-        return array_map( 'absint', $wpdb->get_col( $query ) );
-        // phpcs:enable
+        return array_map( 'absint', $wpdb->get_col( $query ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $query was already built via $wpdb->prepare() above.
     } // End get_scan_queue()
 
 
@@ -147,118 +186,131 @@ class Audits {
 
 
     /**
-     * Scan a single post for a given audit type, returning details if a finding exists, or null.
+     * Scan callback: orphaned pages.
      *
-     * @param string $audit_type
      * @param int $post_id
-     * @param string $all_content Precomputed full-site content for orphan-checking (only used by 'orphaned').
+     * @param array $context
      * @return array|null
      */
-    public static function scan_post( string $audit_type, int $post_id, string $all_content = '' ) : ?array {
+    public static function scan_orphaned( int $post_id, array $context ) : ?array {
         $post = get_post( $post_id );
 
         if ( ! $post ) {
             return null;
         }
 
-        switch ( $audit_type ) {
-            case 'orphaned':
-                $home_id = (int) get_option( 'page_on_front' );
-                $blog_id = (int) get_option( 'page_for_posts' );
+        $home_id = (int) get_option( 'page_on_front' );
+        $blog_id = (int) get_option( 'page_for_posts' );
 
-                if ( $post->ID === $home_id || $post->ID === $blog_id ) {
-                    return null;
-                }
-
-                if ( self::is_in_nav_menus( $post->ID ) ) {
-                    return null;
-                }
-
-                $path = wp_parse_url( get_permalink( $post ), PHP_URL_PATH );
-
-                if ( ! $path || false !== strpos( $all_content, $path ) ) {
-                    return null;
-                }
-
-                return [];
-
-            case 'alt_text':
-                $missing = [];
-                $featured_id = get_post_thumbnail_id( $post );
-
-                if ( $featured_id ) {
-                    $alt = get_post_meta( $featured_id, '_wp_attachment_image_alt', true );
-
-                    if ( '' === trim( (string) $alt ) ) {
-                        $missing[] = [
-                            'src'    => wp_get_attachment_url( $featured_id ),
-                            'source' => 'featured',
-                        ];
-                    }
-                }
-
-                if ( preg_match_all( '/<img[^>]+>/i', $post->post_content, $tags ) ) {
-                    foreach ( $tags[ 0 ] as $tag ) {
-                        if ( preg_match( '/alt=["\']([^"\']*)["\']/i', $tag, $alt_match ) && '' !== trim( $alt_match[ 1 ] ) ) {
-                            continue;
-                        }
-
-                        preg_match( '/src=["\']([^"\']*)["\']/i', $tag, $src_match );
-                        $missing[] = [
-                            'src'    => $src_match[ 1 ] ?? '',
-                            'source' => 'content',
-                        ];
-                    }
-                }
-
-                return empty( $missing ) ? null : [ 'images' => $missing ];
-
-            case 'seo_meta':
-                if ( ! Integrations::is_yoast_active() ) {
-                    return null;
-                }
-
-                $title = Integrations::get_yoast_title( $post->ID );
-                $description = Integrations::get_yoast_meta_description( $post->ID );
-
-                $missing = [];
-
-                if ( '' === trim( $title ) ) {
-                    $missing[] = 'title';
-                }
-
-                if ( '' === trim( $description ) ) {
-                    $missing[] = 'description';
-                }
-
-                return empty( $missing ) ? null : [ 'missing' => $missing ];
-
-            case 'mixed_content':
-                if ( 'https' !== wp_parse_url( home_url(), PHP_URL_SCHEME ) ) {
-                    return null;
-                }
-
-                $urls = [];
-
-                if ( preg_match_all( '/(src|href)=["\']http:\/\/[^"\']+["\']/i', $post->post_content, $matches ) ) {
-                    $urls = $matches[ 0 ];
-                }
-
-                $featured_id = get_post_thumbnail_id( $post );
-
-                if ( $featured_id ) {
-                    $featured_url = wp_get_attachment_url( $featured_id );
-
-                    if ( $featured_url && 0 === strpos( $featured_url, 'http://' ) ) {
-                        $urls[] = $featured_url;
-                    }
-                }
-
-                return empty( $urls ) ? null : [ 'urls' => array_unique( $urls ) ];
-
-            default:
-                return null;
+        if ( $post->ID === $home_id || $post->ID === $blog_id ) {
+            return null;
         }
+
+        if ( self::is_in_nav_menus( $post->ID ) ) {
+            return null;
+        }
+
+        $all_content = $context[ 'all_content' ] ?? '';
+        $path = wp_parse_url( get_permalink( $post ), PHP_URL_PATH );
+
+        if ( ! $path || false !== strpos( $all_content, $path ) ) {
+            return null;
+        }
+
+        return [];
+    } // End scan_orphaned()
+
+
+    /**
+     * Scan callback: missing alt text.
+     *
+     * @param int $post_id
+     * @param array $context
+     * @return array|null
+     */
+    public static function scan_alt_text( int $post_id, array $context ) : ?array {
+        $post = get_post( $post_id );
+
+        if ( ! $post ) {
+            return null;
+        }
+
+        $missing = [];
+        $featured_id = get_post_thumbnail_id( $post );
+
+        if ( $featured_id ) {
+            $alt = get_post_meta( $featured_id, '_wp_attachment_image_alt', true );
+
+            if ( '' === trim( (string) $alt ) ) {
+                $missing[] = [ 'src' => wp_get_attachment_url( $featured_id ), 'source' => 'featured' ];
+            }
+        }
+
+        if ( preg_match_all( '/<img[^>]+>/i', $post->post_content, $tags ) ) {
+            foreach ( $tags[ 0 ] as $tag ) {
+                if ( preg_match( '/alt=["\']([^"\']*)["\']/i', $tag, $alt_match ) && '' !== trim( $alt_match[ 1 ] ) ) {
+                    continue;
+                }
+
+                preg_match( '/src=["\']([^"\']*)["\']/i', $tag, $src_match );
+                $missing[] = [ 'src' => $src_match[ 1 ] ?? '', 'source' => 'content' ];
+            }
+        }
+
+        return empty( $missing ) ? null : [ 'images' => $missing ];
+    } // End scan_alt_text()
+
+
+    /**
+     * Scan callback: mixed content.
+     *
+     * @param int $post_id
+     * @param array $context
+     * @return array|null
+     */
+    public static function scan_mixed_content( int $post_id, array $context ) : ?array {
+        $post = get_post( $post_id );
+
+        if ( ! $post ) {
+            return null;
+        }
+
+        $urls = [];
+
+        if ( preg_match_all( '/(src|href)=["\']http:\/\/[^"\']+["\']/i', $post->post_content, $matches ) ) {
+            $urls = $matches[ 0 ];
+        }
+
+        $featured_id = get_post_thumbnail_id( $post );
+
+        if ( $featured_id ) {
+            $featured_url = wp_get_attachment_url( $featured_id );
+
+            if ( $featured_url && 0 === strpos( $featured_url, 'http://' ) ) {
+                $urls[] = $featured_url;
+            }
+        }
+
+        return empty( $urls ) ? null : [ 'urls' => array_unique( $urls ) ];
+    } // End scan_mixed_content()
+
+
+    /**
+     * Scan a single post for a given audit type, dispatching to its registered callback.
+     *
+     * @param string $audit_type
+     * @param int $post_id
+     * @param string $all_content Precomputed full-site content, passed through as context.
+     * @return array|null
+     */
+    public static function scan_post( string $audit_type, int $post_id, string $all_content = '' ) : ?array {
+        $types = self::get_types();
+
+        if ( ! isset( $types[ $audit_type ][ 'scan_callback' ] ) || ! is_callable( $types[ $audit_type ][ 'scan_callback' ] ) ) {
+            return null;
+        }
+
+        return call_user_func( $types[ $audit_type ][ 'scan_callback' ], $post_id, [ 'all_content' => $all_content ] );
     } // End scan_post()
 
 
@@ -277,7 +329,7 @@ class Audits {
         $audit_type = sanitize_key( wp_unslash( $_POST[ 'audit_type' ] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
         $offset = absint( wp_unslash( $_POST[ 'offset' ] ?? 0 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
 
-        if ( ! in_array( $audit_type, self::TYPES, true ) ) {
+        if ( ! array_key_exists( $audit_type, self::get_types() ) ) {
             wp_send_json_error( [ 'message' => __( 'Invalid audit type.', 'site-quality-check' ) ] );
         }
 
@@ -298,12 +350,10 @@ class Audits {
             global $wpdb;
             $post_types = StaleContent::get_included_post_types();
             $placeholders = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
-            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $placeholders is a dynamically-built string of %s format specifiers, not a raw value.
-            $all_content = implode( ' ', $wpdb->get_col( $wpdb->prepare(
+            $all_content = implode( ' ', $wpdb->get_col( $wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $placeholders is a %s format specifier string, not a raw value.
                 "SELECT post_content FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders})",
                 $post_types
             ) ) );
-            // phpcs:enable
             set_transient( 'sqcheck_scan_all_content', $all_content, HOUR_IN_SECONDS );
         } elseif ( 'orphaned' === $audit_type ) {
             $all_content = get_transient( 'sqcheck_scan_all_content' ) ?: '';

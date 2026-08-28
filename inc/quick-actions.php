@@ -44,11 +44,7 @@ class QuickActions {
      * @return array Keyed by action slug: [ 'label' => string, 'available' => bool ]
      */
     public static function get_available_actions() : array {
-        return [
-            'test_contact_form' => [
-                'label'     => __( 'Test Contact Form', 'site-quality-check' ),
-                'available' => Integrations::is_gravity_forms_active(),
-            ],
+        $actions = [
             'check_404s' => [
                 'label'     => __( 'Check Key Pages for 404s', 'site-quality-check' ),
                 'available' => true,
@@ -62,6 +58,8 @@ class QuickActions {
                 'available' => is_ssl(),
             ],
         ];
+
+        return apply_filters( 'sqcheck_quick_actions', $actions );
     } // End get_available_actions()
 
 
@@ -78,14 +76,19 @@ class QuickActions {
         }
 
         $action = sanitize_text_field( wp_unslash( $_POST[ 'quick_action' ] ?? '' ) );
+        $available = self::get_available_actions();
 
-        $result = match ( $action ) {
-            'test_contact_form'     => $this->test_contact_form(),
-            'check_404s'            => $this->check_404s(),
-            'check_robots_sitemap'  => $this->check_robots_sitemap(),
-            'check_ssl'             => $this->check_ssl(),
-            default                 => null,
-        };
+        if ( isset( $available[ $action ][ 'callback' ] ) && is_callable( $available[ $action ][ 'callback' ] ) ) {
+            $result = call_user_func( $available[ $action ][ 'callback' ] );
+        } else {
+            $result = match ( $action ) {
+                'test_contact_form'     => $this->test_contact_form(),
+                'check_404s'            => $this->check_404s(),
+                'check_robots_sitemap'  => $this->check_robots_sitemap(),
+                'check_ssl'             => $this->check_ssl(),
+                default                 => null,
+            };
+        }
 
         if ( null === $result ) {
             wp_send_json_error( [ 'message' => __( 'Unknown action.', 'site-quality-check' ) ] );
