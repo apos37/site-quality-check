@@ -51,8 +51,8 @@ class StaleContent {
     private function __construct() {
         add_action( 'wp_ajax_sqcheck_omit_stale_post', [ $this, 'ajax_omit_post' ] );
         add_action( 'wp_ajax_sqcheck_unomit_stale_post', [ $this, 'ajax_unomit_post' ] );
-        add_action( 'sqcheck_subheader_left', [ $this, 'render_subheader_toggle' ] );
         add_action( 'sqcheck_subheader_right', [ $this, 'render_subheader_search' ] );
+        add_action( 'sqcheck_subheader_right', [ $this, 'render_subheader_toggle' ], 20 );
     } // End __construct()
 
 
@@ -263,7 +263,7 @@ class StaleContent {
 
 
     /**
-     * Render the "Show Omitted" / "Show Stale Content" toggle in the subheader (left side).
+     * Render the "Show Omitted" / "Show Stale Content" toggle in the subheader (right side).
      *
      * @param string $active_page
      * @return void

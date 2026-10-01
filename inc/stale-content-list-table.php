@@ -247,7 +247,7 @@ class StaleContentListTable extends \WP_List_Table {
 
         $this->all_items = $items;
 
-        $per_page = 20;
+        $per_page = PerPage::get();
         $current_page = $this->get_pagenum();
         $total_items = count( $items );
 
@@ -259,5 +259,14 @@ class StaleContentListTable extends \WP_List_Table {
 
         $this->items = array_slice( $items, ( $current_page - 1 ) * $per_page, $per_page );
     } // End prepare_items()
+
+
+    /**
+     * @param string $which
+     * @return void
+     */
+    protected function extra_tablenav( $which ) : void {
+        PerPage::render_field( $which );
+    } // End extra_tablenav()
 
 } // End class StaleContentListTable

@@ -46,6 +46,7 @@ class Audits {
         add_action( 'wp_ajax_sqcheck_scan_chunk', [ $this, 'ajax_scan_chunk' ] );
         add_action( 'wp_ajax_sqcheck_omit_audit_result', [ $this, 'ajax_omit_result' ] );
         add_action( 'wp_ajax_sqcheck_unomit_audit_result', [ $this, 'ajax_unomit_result' ] );
+        add_action( 'before_delete_post', [ $this, 'delete_results_for_post' ] );
     } // End __construct()
 
 
@@ -424,7 +425,7 @@ class Audits {
 
 
     /**
-     * Get stored results for an audit type.
+     * Get stored results for an audit type, excluding posts that no longer exist or aren't published.
      *
      * @param string $audit_type
      * @param bool $omitted
@@ -436,7 +437,7 @@ class Audits {
 
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table comes only from self::table(), a hardcoded prefix + fixed name; results must reflect live scan state, not cached data.
         return $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM {$table} WHERE audit_type = %s AND omitted = %d ORDER BY found_at DESC",
+            "SELECT r.* FROM {$table} r INNER JOIN {$wpdb->posts} p ON p.ID = r.post_id WHERE r.audit_type = %s AND r.omitted = %d AND p.post_status = 'publish' ORDER BY r.found_at DESC",
             $audit_type,
             $omitted ? 1 : 0
         ), ARRAY_A );
@@ -501,6 +502,19 @@ class Audits {
 
         wp_send_json_success();
     } // End ajax_unomit_result()
+
+
+    /**
+     * Remove stored audit results (including omit flags) for a post being permanently deleted.
+     *
+     * @param int $post_id
+     * @return void
+     */
+    public function delete_results_for_post( $post_id ) : void {
+        global $wpdb;
+
+        $wpdb->delete( self::table(), [ 'post_id' => (int) $post_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- write operation, not cacheable.
+    } // End delete_results_for_post()
 
 } // End class Audits
 

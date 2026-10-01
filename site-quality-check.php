@@ -42,6 +42,7 @@ final class Bootstrap {
         'checklists.php',
         'default-data.php',
         'checklists-ajax.php',
+        'per-page.php',
         'stale-content-list-table.php',
         'stale-content.php',
         'audits.php',
