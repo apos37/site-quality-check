@@ -239,6 +239,8 @@ class ContentAudits {
 
         $table = new ContentAuditsListTable( $current_tab, self::get_details_renderer( $current_tab ) );
         $table->prepare_items();
+        $last_checked = (int) get_option( 'sqcheck_audit_last_checked_' . $current_tab, 0 );
+        $never_scanned = ! $last_checked;
         ?>
         <div class="wrap sqcheck-content-wrap sqcheck-content-audits">
             <p><?php echo esc_html( self::get_audit_description( $current_tab ) ); ?></p>
@@ -253,8 +255,13 @@ class ContentAudits {
             <div id="sqcheck-audit-scanning-status" style="display:none;"></div>
             <div class="sqcheck-box" id="sqcheck-audit-results-box">
                 <div class="sqcheck-box-body">
-                    <?php if ( empty( $table->items ) ) : ?>
-                        <p><?php esc_html_e( 'No results found.', 'site-quality-check' ); ?></p>
+                    <?php if ( $never_scanned && ! $showing_omitted ) : ?>
+                        <div class="sqcheck-audit-empty">
+                            <p><strong><?php esc_html_e( 'This audit has not been run yet.', 'site-quality-check' ); ?></strong> <?php esc_html_e( 'Run a scan to check your content for this issue.', 'site-quality-check' ); ?></p>
+                            <button type="button" class="sqcheck-button sqcheck-scan-now"><?php esc_html_e( 'Scan Now', 'site-quality-check' ); ?></button>
+                        </div>
+                    <?php elseif ( empty( $table->items ) ) : ?>
+                        <p><?php echo esc_html( $showing_omitted ? __( 'No omitted items.', 'site-quality-check' ) : __( 'No issues found as of the last scan.', 'site-quality-check' ) ); ?></p>
                     <?php else : ?>
                         <form method="get">
                             <input type="hidden" name="page" value="<?php echo esc_attr( Menu::MENU_SLUG . '-content-audits' ); ?>">

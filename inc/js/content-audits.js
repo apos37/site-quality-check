@@ -26,6 +26,10 @@
             runScan( auditType, 0 );
         } );
 
+        $( document ).on( 'click', '.sqcheck-scan-now', function () {
+            $( '#sqcheck-refresh-audit' ).trigger( 'click' );
+        } );
+
         function runScan( auditType, offset ) {
             $.post( sqcheckAudits.ajaxUrl, {
                 action: 'sqcheck_scan_chunk',

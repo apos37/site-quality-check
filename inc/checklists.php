@@ -23,11 +23,12 @@ class Checklists {
      * Recurrence intervals mapped to snooze/reset durations.
      */
     public const RECURRENCE_INTERVALS = [
-        'daily'     => DAY_IN_SECONDS,
-        'weekly'    => WEEK_IN_SECONDS,
-        'monthly'   => MONTH_IN_SECONDS,
-        'quarterly' => 3 * MONTH_IN_SECONDS,
-        'annually'  => YEAR_IN_SECONDS,
+        'daily'        => DAY_IN_SECONDS,
+        'weekly'       => WEEK_IN_SECONDS,
+        'monthly'      => MONTH_IN_SECONDS,
+        'quarterly'    => 3 * MONTH_IN_SECONDS,
+        'semiannually' => 6 * MONTH_IN_SECONDS,
+        'annually'     => YEAR_IN_SECONDS,
     ];
 
 

@@ -365,7 +365,7 @@ class Audits {
 
         foreach ( $chunk as $post_id ) {
             $result = self::scan_post( $audit_type, $post_id, $all_content );
-            $last_title = get_the_title( $post_id );
+            $last_title = html_entity_decode( get_the_title( $post_id ), ENT_QUOTES, get_bloginfo( 'charset' ) );
 
             if ( null !== $result ) {
                 self::save_result( $audit_type, $post_id, $result );

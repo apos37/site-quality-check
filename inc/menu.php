@@ -227,14 +227,13 @@ class Menu {
 
     /**
      * Get the default logo URL, used when no custom logo is set in Settings.
-     * Falls back to the plugin's own bundled logo; integrations can hook
-     * 'sqcheck_default_logo' to provide a better fallback if a compatible
-     * companion plugin (with its own branding) is active.
+     * Falls back to the plugin's own bundled logo; other code can hook
+     * 'sqcheck_default_logo' to override it.
      *
      * @return string
      */
     public static function get_default_logo() : string {
-        $default = Bootstrap::url() . 'inc/img/logo.png';
+        $default = add_query_arg( 'ver', Bootstrap::script_version(), Bootstrap::url() . 'inc/img/logo.png' );
 
         return apply_filters( 'sqcheck_default_logo', $default );
     } // End get_default_logo()

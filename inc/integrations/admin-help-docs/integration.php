@@ -38,16 +38,6 @@ if ( ! Integrations::is_active( 'admin-help-docs/admin-help-docs.php' ) ) {
 
 
 /**
- * Add a quick action to import Site Quality Check's help docs into Admin Help Docs.
- */
-add_filter( 'sqcheck_default_logo', function ( string $logo ) : string {
-    $ahd_logo = get_option( 'helpdocs_logo', '' ); // phpcs:ignore
-
-    return $ahd_logo ? sanitize_text_field( $ahd_logo ) : $logo;
-} );
-
-
-/**
  * Add Admin Help Docs' color theme.
  */
 add_filter( 'sqcheck_theme_colors', function ( array $colors ) : array {

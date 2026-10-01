@@ -53,7 +53,7 @@ class Helpers {
     } // End generate_id()
 
 
-    /**
+        /**
      * Get a human-readable label for a recurrence key.
      *
      * @param string $recurrence
@@ -61,11 +61,12 @@ class Helpers {
      */
     public static function recurrence_label( string $recurrence ) : string {
         $labels = [
-            'daily'     => __( 'Daily', 'site-quality-check' ),
-            'weekly'    => __( 'Weekly', 'site-quality-check' ),
-            'monthly'   => __( 'Monthly', 'site-quality-check' ),
-            'quarterly' => __( 'Quarterly', 'site-quality-check' ),
-            'annually'  => __( 'Annually', 'site-quality-check' ),
+            'daily'        => __( 'Daily', 'site-quality-check' ),
+            'weekly'       => __( 'Weekly', 'site-quality-check' ),
+            'monthly'      => __( 'Monthly', 'site-quality-check' ),
+            'quarterly'    => __( 'Quarterly', 'site-quality-check' ),
+            'semiannually' => __( 'Semiannually', 'site-quality-check' ),
+            'annually'     => __( 'Annually', 'site-quality-check' ),
         ];
 
         return $labels[ $recurrence ] ?? ucfirst( $recurrence );

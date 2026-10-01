@@ -16,7 +16,7 @@ Keep every site up to date with editable checklists, stale content tracking, and
 
 **Features:**
 
-- Editable, drag-and-drop checklists organized into sections (daily, weekly, monthly, quarterly, annual) with recurrence-based auto-reset
+- Editable, drag-and-drop checklists organized into sections (daily, weekly, monthly, quarterly, semiannually, annually) with recurrence-based auto-reset
 - Multiple checklist tabs (Developer, Designer, Content Editor by default) with per-tab role-based access control
 - Mark items complete, snooze until the next cycle, or permanently omit them
 - Stale content viewer with configurable warning, danger, and critical thresholds
